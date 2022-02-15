@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "puppeteer": "^13.3.2"
+  }
+}
