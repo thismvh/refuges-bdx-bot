@@ -1,5 +1,5 @@
 const { findRefuges } = require("./scraper");
-const { Composer, WizardScene, Stage, session } = require("micro-bot");
+const { Composer, WizardScene, Stage, session, Markup } = require("micro-bot");
 
 // Pre-defined messages the bot will use to interact with the user
 const WELCOME_MESSAGE = "Coucou, j'ai entendu tu veux reserver un refuge? Viens avec moi... ;)";
@@ -24,12 +24,21 @@ bot.command("clear", (ctx) => {
   ctx.reply("Got it! Cleared my memory just now. W-w-wait... Who are you again? Nevermind, send /start /help or /stop to continue.")
 });
 
+const buttons = Markup.inlineKeyboard([
+  [Markup.callbackButton('Test', 'test')],
+  [Markup.callbackButton('Test 2', 'test2')]
+])
+
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
   // Ask user for the first name
   async (ctx) => {
     ctx.reply(WHICH_REFUGE_MESSAGE);
     var allRefuges = await findRefuges();
+    ctx.reply(allRefuges.toString(), {
+      parse_mode: 'MarkdownV2',
+      reply_markup: buttons
+    });
     ctx.wizard.state.contactData = {};
     return ctx.wizard.next();
   },
