@@ -33,9 +33,11 @@ const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
   // Ask user for the first name
   async (ctx) => {
-    ctx.reply(WHICH_REFUGE_MESSAGE);
+    await ctx.reply(WHICH_REFUGE_MESSAGE);
+    // Why is allRefuges undefined?
     var allRefuges = await findRefuges();
-    ctx.reply(allRefuges.toString(), {
+    // Does the button, display work?
+    await ctx.reply(allRefuges, {
       parse_mode: 'MarkdownV2',
       reply_markup: buttons
     });
