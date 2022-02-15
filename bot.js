@@ -37,7 +37,7 @@ const contactDataWizard = new WizardScene(
     // Why is allRefuges undefined?
     var allRefuges = await findRefuges();
     // Does the button, display work?
-    await ctx.reply(allRefuges, {
+    await ctx.reply(WHICH_REFUGE_MESSAGE, {
       parse_mode: 'MarkdownV2',
       reply_markup: buttons
     });
