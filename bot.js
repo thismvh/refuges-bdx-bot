@@ -34,17 +34,23 @@ const contactDataWizard = new WizardScene(
   // Ask user for the first name
   async (ctx) => {
     var allRefuges = await findRefuges();
-    var buttons = allRefuges.map(refuge => [ { text: refuge, callback_data: refuge } ])
+    // var refuges = allRefuges.map(refuge => [ { text: refuge.name, callback_data: refuge.name } ])
     await ctx.reply(WHICH_REFUGE_MESSAGE);
-    // Why is allRefuges undefined?
   
-    // Does the button, display work?
-    await ctx.replyWithMarkdownV2("WHICH_REFUGE_MESSAGE", {
-      parse_mode: 'MarkdownV2',
-      reply_markup: {
-        inline_keyboard: buttons
-      }
+    // Does the button, display work after refactoring with images?
+    await ctx.reply("Voici la liste de refuges:");
+    allRefuges.forEach(refuge => {
+      await ctx.replyWithPhoto(refuge.img, {
+        url: refuge.img,
+        parse_mode: 'MarkdownV2',
+        reply_markup: {
+          inline_keyboard: [
+            { text: refuge.name, callback_data: refuge.name }
+          ]
+        }
+      });
     });
+    
     ctx.wizard.state.contactData = {};
     return ctx.wizard.next();
   },

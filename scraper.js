@@ -27,20 +27,66 @@ async function findRefuges() {
     await page.goto(BDX_REFUGES_URL);
 
     // Wait for refuges to load
-    await page.waitForSelector("[class*='lien-colonne'] a, [class*='lien-refuge-colonne'] a");
-    await page.waitForSelector("a[href*='les-refuges']");
+    // Use DOMRegex after all?
+    var allRefugesSelector = "[class*='colonne-1 field--type-image'] a, [class*='colonne-2 field--type-image'] a, [class*='colonne-3 field--type-image'] a";
+    var fakeRefugesSelector = "a[href*='les-refuges']";
+    await page.waitForSelector(allRefugesSelector);
+    await page.waitForSelector(fakeRefugesSelector);
     
     // Get list of all refuges
-    var allRefuges = await getRefuges(page, "[class*='lien-colonne'] a, [class*='lien-refuge-colonne'] a");
-    var fakeRefuges = await getRefuges(page, "a[href*='les-refuges']");
-    var realRefuges = allRefuges.filter(refuge => !fakeRefuges.includes(refuge));
+    var allRefuges = await getRefuges(page, allRefugesSelector);
+    var fakeRefuges = await getRefuges(page, fakeRefugesSelector);
+    var realRefuges = allRefuges.filter(refuge => !fakeRefuges.map(ref => ref.name).includes(refuge.name));
 
-    realRefuges = realRefuges.map(refuge => 
-        refuge.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ")
-    )
+    realRefuges = realRefuges.map(refuge => (
+        {
+            name: refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" "),
+            url: refuge.url,
+            img: refuge.img
+        }
+    ))
 
     return realRefuges;
 };
+
+async function getAvailableDates(refugeUrl) {
+    console.log("Starting getAvailableDates process");
+    // Create browser instance
+    const browser = await puppeteer.launch({
+        headless: false,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
+
+    // Open new tab
+    const page = await browser.newPage();
+
+    // Go to one.com login page
+    await page.goto(refugeUrl);
+
+    await page.waitForSelector(".hasDatepicker")
+
+    // var daySelector = "[data-handler='selectDay']"
+    var daySelector = ".ui-state-default";
+    var nextMonthSelector = "[data-handler='next']"
+    var availableDates = [];
+    var monthsInAdvance = 5;
+    for (let index = 0; index < [...Array(monthsInAdvance).keys()].length; index++) {
+        console.log("availableDates has length" + availableDates.length)
+        // Get available dates of current month
+        await page.waitForSelector(daySelector)
+        var newDates = await page.$$(daySelector)
+
+        // Add available dates from this month to the total
+        availableDates = availableDates.concat(newDates)
+
+        // Go to next month
+        await page.waitForSelector(nextMonthSelector)
+        var nextMonthButton = await page.$(nextMonthSelector)
+        await page.evaluate(e => e.click(), nextMonthButton);
+    }
+
+    return availableDates;
+}
 
 function capitalise(string) {
     return string.charAt(0).toUpperCase() + string.slice(1)
@@ -69,14 +115,23 @@ function replaceUmlaute(str) {
 
 function getRefuges(page, selector) {
     return page.evaluate((sel) => {
+        var images = []
+        var urls = []
+        var names = []
         let elements = Array.from(document.querySelectorAll(sel));
-        let links = elements.map(element =>
-            // Get relative URL 
-            element.href.replace(/^(?:\/\/|[^/]+)*\//, '')
-        )
-        return links;
+        let refuges = elements.map(element => {
+            return { 
+                name:  element.href.replace(/^(?:\/\/|[^/]+)*\//, ''),
+                url: element.href,
+                img: element.childNodes[0].src
+            }
+        })
+        return refuges;
     }, selector);
 };
+
+// getAvailableDates("https://lesrefuges.bordeaux-metropole.fr/la-station-orbitale")
+// findRefuges()
 
 module.exports = {
     findRefuges
