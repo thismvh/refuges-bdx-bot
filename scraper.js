@@ -38,6 +38,8 @@ async function findRefuges() {
     realRefuges = realRefuges.map(refuge => 
         refuge.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ")
     )
+
+    return realRefuges;
 };
 
 function capitalise(string) {

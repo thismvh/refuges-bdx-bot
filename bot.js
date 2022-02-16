@@ -33,22 +33,18 @@ const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
   // Ask user for the first name
   async (ctx) => {
+    console.log("Starting findRefuges in bot...")
+    var allRefuges = await findRefuges();
+    console.log("findRefuges in bot finished!")
+    var buttons = allRefuges.map(refuge => [ { text: refuge, callback_data: refuge } ])
     await ctx.reply(WHICH_REFUGE_MESSAGE);
     // Why is allRefuges undefined?
-    var allRefuges = await findRefuges();
+  
     // Does the button, display work?
     await ctx.replyWithMarkdownV2("WHICH_REFUGE_MESSAGE", {
       parse_mode: 'MarkdownV2',
       reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "Button 1", callback_data: "Button 1" },
-            { text: "Button 2", callback_data: "Button 2" },
-          ],
-          [
-            { text: "Button 3", callback_data: "Button 3" },
-          ]
-        ]
+        inline_keyboard: [ buttons ]
       }
     });
     ctx.wizard.state.contactData = {};
