@@ -10,6 +10,8 @@ const EMAIL_MESSAGE = "Perfect! What's the person's private email (to know where
 const CC_MESSAGE = "Aaaalright! And what's your own email address? (I'll set you in Cc so you're up to date)"
 const HELP_MESSAGE = "This is the LobVR account generator bot. You give me name and email, I do the rest, meaning:\n\n1) Creating a LobVR account\n2) Inviting that LobVR account to ClickUp and\n3) Sending a confirmation email to the person's private email address to get them started\n\nAnything else the person might need to start working (e.g. get invited to Google Drive folders) I can't do, so please remember to do those things yourself :)\n\nSend /start to get me going. Send /clear to clear my memory while staying in the conversation. You can tell me at any time to /stop if you want and I'll end our conversation.\n\nLeeet's go!"
 
+const ACTION_FETCH_AVAILABLE_DATES = "FETCH_AVAILABLE_DATES";
+
 const bot = new Composer;
 
 // Define a couple commands the user can trigger in the chat
@@ -24,10 +26,9 @@ bot.command("clear", (ctx) => {
   ctx.reply("Got it! Cleared my memory just now. W-w-wait... Who are you again? Nevermind, send /start /help or /stop to continue.")
 });
 
-const buttons = Markup.inlineKeyboard([
-  [Markup.callbackButton('Test', 'test')],
-  [Markup.callbackButton('Test 2', 'test2')]
-])
+bot.action(ACTION_FETCH_AVAILABLE_DATES, (ctx) => {
+  ctx.reply("You clicked the button, yyyyaaayyyy!!")
+})
 
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
@@ -39,17 +40,17 @@ const contactDataWizard = new WizardScene(
   
     // Does the button, display work after refactoring with images?
     await ctx.reply("Voici la liste de refuges:");
-    allRefuges.forEach(refuge => {
+    for (const refuge of allRefuges) {
       await ctx.replyWithPhoto(refuge.img, {
         url: refuge.img,
         parse_mode: 'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
-            { text: refuge.name, callback_data: refuge.name }
+            { text: refuge.name, callback_data: ACTION_FETCH_AVAILABLE_DATES }
           ]
         }
       });
-    });
+    }
     
     // Keep track of which button was pressed (i.e. which refuge was selected)
 
