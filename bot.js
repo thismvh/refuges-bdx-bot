@@ -46,12 +46,12 @@ const contactDataWizard = new WizardScene(
         parse_mode: 'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
-            { text: refuge.name, callback_data: ACTION_FETCH_AVAILABLE_DATES }
+           [ { text: refuge.name, callback_data: ACTION_FETCH_AVAILABLE_DATES } ]
           ]
         }
       });
     }
-    
+
     // Keep track of which button was pressed (i.e. which refuge was selected)
 
     // Go to URL of refuge and look for available dates
