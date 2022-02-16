@@ -1,4 +1,4 @@
-const { findRefuges } = require("./scraper");
+const { findRefuges, getAvailableDates } = require("./scraper");
 const { Composer, WizardScene, Stage, session, Markup } = require("micro-bot");
 
 // Pre-defined messages the bot will use to interact with the user
@@ -51,6 +51,9 @@ const contactDataWizard = new WizardScene(
       });
     });
     
+    // Keep track of which button was pressed (i.e. which refuge was selected)
+
+    // Go to URL of refuge and look for available dates
     ctx.wizard.state.contactData = {};
     return ctx.wizard.next();
   },

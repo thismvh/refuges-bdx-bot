@@ -49,6 +49,8 @@ async function findRefuges() {
     return realRefuges;
 };
 
+
+// MAKE THIS EXECUTE MULTIPLE TIMES A DAY SO THAT WE CAN GET NOTIFICATIONS
 async function getAvailableDates(refugeUrl) {
     console.log("Starting getAvailableDates process");
     // Create browser instance
@@ -134,5 +136,6 @@ function getRefuges(page, selector) {
 // findRefuges()
 
 module.exports = {
-    findRefuges
+    findRefuges,
+    getAvailableDates
 }
