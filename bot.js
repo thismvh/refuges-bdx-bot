@@ -14,6 +14,9 @@ const ACTION_FETCH_AVAILABLE_DATES = "FETCH_AVAILABLE_DATES";
 
 const bot = new Composer;
 
+// Global refuges list
+var allRefuges = [];
+
 // Define a couple commands the user can trigger in the chat
 bot.command("stop", (ctx) => {
   ctx.reply("k thx byeeeeeeeeeee");
@@ -27,14 +30,15 @@ bot.command("clear", (ctx) => {
 });
 
 bot.action(ACTION_FETCH_AVAILABLE_DATES, (ctx) => {
-  ctx.reply("You clicked the button, yyyyaaayyyy!!")
+  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + JSON.stringify(ctx))
+  ctx.reply(JSON.stringify(ctx))
 })
 
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
   // Ask user for the first name
   async (ctx) => {
-    var allRefuges = await findRefuges();
+    allRefuges = await findRefuges();
     // var refuges = allRefuges.map(refuge => [ { text: refuge.name, callback_data: refuge.name } ])
     await ctx.reply(WHICH_REFUGE_MESSAGE);
   
