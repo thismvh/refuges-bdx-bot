@@ -29,10 +29,10 @@ bot.command("clear", (ctx) => {
   ctx.reply("Got it! Cleared my memory just now. W-w-wait... Who are you again? Nevermind, send /start /help or /stop to continue.")
 });
 
-bot.action(ACTION_FETCH_AVAILABLE_DATES, (ctx) => {
-
-  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + ctx.chosenInlineResult)
-  ctx.reply("This is the result you chose: " + ctx.chosenInlineResult)
+var regex = new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g");
+bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1))
+  ctx.reply("This is the result you chose: " + ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1))
 })
 
 const contactDataWizard = new WizardScene(
@@ -51,7 +51,7 @@ const contactDataWizard = new WizardScene(
         parse_mode: 'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
-           [ { text: refuge.name, callback_data: ACTION_FETCH_AVAILABLE_DATES } ]
+           [ { text: refuge.name, callback_data: `${ACTION_FETCH_AVAILABLE_DATES}_${refuge.url}` } ]
           ]
         }
       });
