@@ -38,8 +38,8 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
   // return ctx.scene.enter('super-wizard', {product_id: product_id});
-  ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
-  // return ctx.wizard.next();
+  // ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
+  return ctx.wizard.next();
 })
 
 const contactDataWizard = new WizardScene(
