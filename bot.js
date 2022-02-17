@@ -6,7 +6,7 @@ const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
 
 // Pre-defined messages the bot will use to interact with the user
 const WELCOME_MESSAGE = "Coucou, j'ai entendu tu veux reserver un refuge? Viens avec moi... ;)";
-const WHICH_REFUGE_MESSAGE = "Quel refuge est-ce que tu veux reserver?";
+const WHICH_REFUGE_MESSAGE = "Quel refuge est-ce que tu veux reserver?\n\nVoici la liste de refuges:";
 const LAST_NAME_MESSAGE = "Aaaw, that's a beautiful name! Thanks! Aaaaaaaaand what's the person's last name?";
 const VALIDATION_MESSAGE = "Look at you! Trying to fool the almighty LobVR Bot... Please enter your real name :)";
 const EMAIL_MESSAGE = "Perfect! What's the person's private email (to know where to send the welcome email to)?";
@@ -50,8 +50,10 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
 const stepHandler = new Composer();
 stepHandler.action(new RegExp("next_+", "g"), async (ctx) => {
   var relativeUrl = ctx.match.input.substring(4 + 1);
-  await ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`)
-  return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: ctx.session.refugeUrl })
+  await ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
+  ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
+  ctx.wizard.next();
+  // return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: ctx.session.refugeUrl })
 })
 
 const contactDataWizard = new WizardScene(
@@ -60,11 +62,8 @@ const contactDataWizard = new WizardScene(
   // Ask user for the first name
   async (ctx) => {
     allRefuges = await findRefuges();
-    // var refuges = allRefuges.map(refuge => [ { text: refuge.name, callback_data: refuge.name } ])
     await ctx.reply(WHICH_REFUGE_MESSAGE);
   
-    // Does the button, display work after refactoring with images?
-    await ctx.reply("Voici la liste de refuges:");
     for (const refuge of allRefuges) {
       await ctx.replyWithPhoto(refuge.img, {
         url: refuge.img,
@@ -77,10 +76,6 @@ const contactDataWizard = new WizardScene(
         }
       });
     }
-  
-    // return ctx.wizard.next();
-    console.log("ABOUT TO ENTER THE NEXT SCENE... THE ctx.session IS LOOKING LIKE DIS: " + Object.keys(ctx.session))
-    return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: ctx.session.refugeUrl })
   },
   // Ask user for the last name
   (ctx) => {
