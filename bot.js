@@ -37,10 +37,16 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
   console.log("THE CONTEXT IS LOOKING LIKE DIS DAWG: " + Object.keys(ctx));
-  console.log("THE CONTEXT HAS THE FOLLOWING VALUES: " + Object.values(ctx));
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
-  ctx.state = { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` };
+  if(ctx.session == null) {
+    ctx.session = { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` };
+  } else {
+    ctx.session.refugeUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
+  }
+  
+
+  return;
 
   // return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
 })
@@ -67,7 +73,9 @@ const contactDataWizard = new WizardScene(
       });
     }
   
-    return ctx.wizard.next();
+    // return ctx.wizard.next();
+    console.log("ABOUT TO ENTER THE NEXT SCENE... THE ctx.session IS LOOKING LIKE DIS: " + Object.keys(ctx.session))
+    return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: ctx.session.refugeUrl })
   },
   // Ask user for the last name
   (ctx) => {
