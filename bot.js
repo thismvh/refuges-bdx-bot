@@ -40,7 +40,9 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   console.log("THE CONTEXT HAS THE FOLLOWING VALUES: " + Object.values(ctx));
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
-  return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
+  ctx.state = { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` };
+
+  // return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
 })
 
 const contactDataWizard = new WizardScene(
@@ -65,13 +67,12 @@ const contactDataWizard = new WizardScene(
       });
     }
   
-    // return ctx.wizard.next();
-    // return ctx.scene.leave();
-    return;
+    return ctx.wizard.next();
   },
   // Ask user for the last name
   (ctx) => {
     console.log("REACHED THE SECOND STEP!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
+    console.log("THE CONTEXT IS LOOKING LIKE DIS DAWG: " + Object.keys(ctx));
     // First name validation
     if (ctx.message.text.length < 2) {
       ctx.reply(VALIDATION_MESSAGE);
