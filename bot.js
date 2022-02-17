@@ -37,9 +37,7 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
-  // return ctx.scene.enter('super-wizard', {product_id: product_id});
-  // ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
-  return ctx.wizard.next();
+  return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
 })
 
 const contactDataWizard = new WizardScene(
@@ -70,6 +68,83 @@ const contactDataWizard = new WizardScene(
   // Ask user for the last name
   (ctx) => {
     console.log("REACHED THE SECOND STEP!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
+    // First name validation
+    if (ctx.message.text.length < 2) {
+      ctx.reply(VALIDATION_MESSAGE);
+      return;
+    }
+
+    console.log("WITHIN THE SECOND STEP, REACHED THE SECOND PART!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
+
+    ctx.wizard.state.contactData.fName = ctx.message.text;
+    ctx.reply(LAST_NAME_MESSAGE);
+    return ctx.wizard.next();
+  },
+  // Ask user for the email
+  (ctx) => {
+    // Last name validation
+    if (ctx.message.text.length < 2) {
+      ctx.reply(VALIDATION_MESSAGE);
+      return;
+    }
+    ctx.wizard.state.contactData.lName = ctx.message.text;
+    ctx.reply(EMAIL_MESSAGE);
+    return ctx.wizard.next();
+  },
+  (ctx) => {
+    // Cc email validation
+    if (ctx.message.text.match("@") === null) {
+      ctx.reply("Fiddlesticks! That's not a valid email address. Breathe in slowly and try again :)");
+      return;
+    }
+    ctx.wizard.state.contactData.email = ctx.message.text;
+    ctx.reply(CC_MESSAGE);
+    return ctx.wizard.next();
+  },
+  // Pipe first name, last name and email into the account generator script
+  async (ctx) => {
+    // Email validation
+    if (ctx.message.text.match("@") === null) {
+      ctx.reply("Fiddlesticks! That's not a valid email address. Breathe in slowly and try again :)");
+      return;
+    }
+    ctx.wizard.state.contactData.cc = ctx.message.text;
+    await ctx.reply("Thank you for your replies, I'll create your LobVR account now");
+    await ctx.reply("Please hang on tight for 1 or 2 minutes, I'm doing some extremely complex ML stuff... I'll let you know when I'm done :)");
+
+    let { fName, lName, email, cc } = ctx.wizard.state.contactData;
+    let { firstName, lastName, personalEmail, ccEmail, lobvrEmail, lobvrPass } = formatContactData([fName, lName, email, cc])
+
+    await ctx.reply("Creating LobVR account now...");
+    await createEmailAccount(firstName, lastName, lobvrEmail, lobvrPass)
+
+    await ctx.reply("Done! Inviting to ClickUp now...");
+    await inviteToClickup(lobvrEmail)
+
+    await ctx.reply("Done! Sending confirmation email now...");
+    await sendConfirmationEmail(lobvrEmail, lobvrPass, personalEmail, ccEmail, firstName)
+
+    await ctx.reply("done!");
+    await ctx.reply(`I created the account ${lobvrEmail} for our new team member ${fName} ${lName}!`);
+    await ctx.reply("k thx byeeeeeeeeee")
+
+    return ctx.scene.leave();
+  },
+);
+
+const fetchAvailableDatesWizard = new WizardScene(
+  `${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, // first argument is Scene_ID, same as for BaseScene
+  // Ask user for the first name
+  async (ctx) => {
+    console.log("REACHED THE SECOND WIZARD SCENE!!!");
+
+    // Go to URL of refuge and look for available dates 
+    
+    return ctx.wizard.next();
+  },
+  // Ask user for the last name
+  (ctx) => {
+    console.log("REACHED THE SECOND STEP!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.refugeUrl);
     // First name validation
     if (ctx.message.text.length < 2) {
       ctx.reply(VALIDATION_MESSAGE);
@@ -136,9 +211,10 @@ const contactDataWizard = new WizardScene(
   },
 );
 
-// Register the wizard scene previously created
+// Register the wizard scenes previously created
 const stage = new Stage();
 stage.register(contactDataWizard)
+stage.register(fetchAvailableDatesWizard)
 
 // to  be precise, session is not a must have for Scenes to work, but it sure is lonely without one
 const store = new Map();
