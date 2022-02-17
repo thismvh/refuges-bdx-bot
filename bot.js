@@ -32,6 +32,17 @@ bot.command("clear", (ctx) => {
   ctx.reply("Got it! Cleared my memory just now. W-w-wait... Who are you again? Nevermind, send /start /help or /stop to continue.")
 });
 
+// Action to perform once user selects a button in the chat
+bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+  var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
+  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
+  console.log("THE CONTEXT IS LOOKING LIKE DIS DAWG: " + Object.keys(ctx));
+  console.log("THE CONTEXT HAS THE FOLLOWING VALUES: " + Object.values(ctx));
+  ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
+
+  return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
+})
+
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
   // Ask user for the first name
@@ -182,13 +193,5 @@ bot.start((ctx) => {
   ctx.reply(WELCOME_MESSAGE)
     .then(() => ctx.scene.enter("CONTACT_DATA_WIZARD_SCENE_ID"));
 });
-
-bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
-  var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
-  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
-  ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
-
-  return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
-})
 
 module.exports = bot;
