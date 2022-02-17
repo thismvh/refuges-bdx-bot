@@ -16,7 +16,7 @@ const HELP_MESSAGE = "This is the LobVR account generator bot. You give me name 
 
 const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
 
-const bot = new Composer([WizardContext])
+const bot = new Composer([ new WizardContext() ])
 
 // Global refuges list
 var allRefuges = [];
