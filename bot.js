@@ -1,5 +1,6 @@
 const { findRefuges, getAvailableDates } = require("./scraper");
 const { Composer, WizardScene, Stage, session, Markup } = require("micro-bot");
+const WizardContext = require("telegraf/scenes/context");
 
 // Refuges website
 const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
@@ -15,7 +16,7 @@ const HELP_MESSAGE = "This is the LobVR account generator bot. You give me name 
 
 const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
 
-const bot = new Composer();
+const bot = new Composer([WizardContext])
 
 // Global refuges list
 var allRefuges = [];
@@ -33,18 +34,7 @@ bot.command("clear", (ctx) => {
 });
 
 // Action to perform once user selects a button in the chat
-// bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
-//   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
-//   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
-//   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
-
-//   ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
-//   return ctx.wizard.next();
-// })
-
-const stepHandler = new Composer();
-// Action to perform once user selects a button in the chat
-stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
@@ -72,7 +62,6 @@ const contactDataWizard = new WizardScene(
       });
     }
   },
-  stepHandler,
   // Ask user for the last name
   (ctx) => {
     console.log("REACHED THE SECOND STEP!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
