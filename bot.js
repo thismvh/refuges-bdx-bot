@@ -30,8 +30,9 @@ bot.command("clear", (ctx) => {
 });
 
 bot.action(ACTION_FETCH_AVAILABLE_DATES, (ctx) => {
-  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + JSON.stringify(ctx))
-  ctx.reply(JSON.stringify(ctx))
+
+  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + ctx.chosenInlineResult)
+  ctx.reply("This is the result you chose: " + ctx.chosenInlineResult)
 })
 
 const contactDataWizard = new WizardScene(
