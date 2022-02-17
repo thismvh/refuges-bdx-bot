@@ -33,8 +33,7 @@ bot.command("clear", (ctx) => {
 });
 
 // Action to perform once user selects a button in the chat
-const stepHandler = new Composer();
-stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
@@ -45,7 +44,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) =
 
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
-  stepHandler,
+  bot,
   // Ask user for the first name
   async (ctx) => {
     allRefuges = await findRefuges();
