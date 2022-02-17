@@ -15,7 +15,7 @@ const HELP_MESSAGE = "This is the LobVR account generator bot. You give me name 
 
 const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
 
-const bot = new Composer;
+const bot = new Composer();
 
 // Global refuges list
 var allRefuges = [];
@@ -33,7 +33,18 @@ bot.command("clear", (ctx) => {
 });
 
 // Action to perform once user selects a button in the chat
-bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+// bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+//   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
+//   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
+//   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
+
+//   ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
+//   return ctx.wizard.next();
+// })
+
+const stepHandler = new Composer();
+// Action to perform once user selects a button in the chat
+stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
@@ -44,7 +55,6 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
 
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
-  bot,
   // Ask user for the first name
   async (ctx) => {
     allRefuges = await findRefuges();
@@ -62,6 +72,7 @@ const contactDataWizard = new WizardScene(
       });
     }
   },
+  stepHandler,
   // Ask user for the last name
   (ctx) => {
     console.log("REACHED THE SECOND STEP!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
