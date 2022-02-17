@@ -42,6 +42,7 @@ async function findRefuges() {
         {
             name: refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" "),
             url: refuge.url,
+            urlShort: refuge.urlShort,
             img: refuge.img
         }
     ))
@@ -125,6 +126,7 @@ function getRefuges(page, selector) {
             return { 
                 name:  element.href.replace(/^(?:\/\/|[^/]+)*\//, ''),
                 url: element.href,
+                urlShort: element.href.replace(/^(?:\/\/|[^/]+)*\//, ''),
                 img: element.childNodes[0].src
             }
         })

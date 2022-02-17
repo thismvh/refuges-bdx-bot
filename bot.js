@@ -1,6 +1,9 @@
 const { findRefuges, getAvailableDates } = require("./scraper");
 const { Composer, WizardScene, Stage, session, Markup } = require("micro-bot");
 
+// Refuges website
+const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
+
 // Pre-defined messages the bot will use to interact with the user
 const WELCOME_MESSAGE = "Coucou, j'ai entendu tu veux reserver un refuge? Viens avec moi... ;)";
 const WHICH_REFUGE_MESSAGE = "Quel refuge est-ce que tu veux reserver?";
@@ -10,7 +13,7 @@ const EMAIL_MESSAGE = "Perfect! What's the person's private email (to know where
 const CC_MESSAGE = "Aaaalright! And what's your own email address? (I'll set you in Cc so you're up to date)"
 const HELP_MESSAGE = "This is the LobVR account generator bot. You give me name and email, I do the rest, meaning:\n\n1) Creating a LobVR account\n2) Inviting that LobVR account to ClickUp and\n3) Sending a confirmation email to the person's private email address to get them started\n\nAnything else the person might need to start working (e.g. get invited to Google Drive folders) I can't do, so please remember to do those things yourself :)\n\nSend /start to get me going. Send /clear to clear my memory while staying in the conversation. You can tell me at any time to /stop if you want and I'll end our conversation.\n\nLeeet's go!"
 
-const ACTION_FETCH_AVAILABLE_DATES = "FETCH_AVAILABLE_DATES";
+const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
 
 const bot = new Composer;
 
@@ -29,10 +32,11 @@ bot.command("clear", (ctx) => {
   ctx.reply("Got it! Cleared my memory just now. W-w-wait... Who are you again? Nevermind, send /start /help or /stop to continue.")
 });
 
-var regex = new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g");
 bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
-  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1))
-  ctx.reply("This is the result you chose: " + ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1))
+  var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
+  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`)
+  ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`)
+
 })
 
 const contactDataWizard = new WizardScene(
@@ -51,7 +55,7 @@ const contactDataWizard = new WizardScene(
         parse_mode: 'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
-           [ { text: refuge.name, callback_data: `${ACTION_FETCH_AVAILABLE_DATES}_${refuge.url}` } ]
+           [ { text: refuge.name, callback_data: `${ACTION_FETCH_AVAILABLE_DATES}_${refuge.urlShort}` } ]
           ]
         }
       });
