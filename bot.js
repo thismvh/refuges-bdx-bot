@@ -1,6 +1,5 @@
 const { findRefuges, getAvailableDates } = require("./scraper");
 const { Composer, WizardScene, Stage, session, Markup } = require("micro-bot");
-const WizardContext = require("telegraf/scenes/context");
 
 // Refuges website
 const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
@@ -16,7 +15,7 @@ const HELP_MESSAGE = "This is the LobVR account generator bot. You give me name 
 
 const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
 
-const bot = new Composer([ new WizardContext() ])
+const bot = new Composer()
 
 // Global refuges list
 var allRefuges = [];
@@ -41,6 +40,14 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
 
   ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
   return ctx.wizard.next();
+})
+
+bot.on('inline_query', async (ctx) => {
+  console.log("YO, I ENTERED BOT.ON INLINE-QUERY!");
+})
+
+bot.on('callback_query', async (ctx) => {
+  console.log("YO, I ENTERED BOT.ON CALLBACK-QUERY!");
 })
 
 const contactDataWizard = new WizardScene(
