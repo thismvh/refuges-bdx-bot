@@ -53,9 +53,10 @@ const contactDataWizard = new WizardScene(
         }
       });
     }
-    
-    ctx.wizard.state.contactData = {};
-    return ctx.wizard.next();
+  
+    // return ctx.wizard.next();
+    // return ctx.scene.leave();
+    return;
   },
   // Ask user for the last name
   (ctx) => {
@@ -71,57 +72,7 @@ const contactDataWizard = new WizardScene(
     ctx.wizard.state.contactData.fName = ctx.message.text;
     ctx.reply(LAST_NAME_MESSAGE);
     return ctx.wizard.next();
-  },
-  // Ask user for the email
-  (ctx) => {
-    // Last name validation
-    if (ctx.message.text.length < 2) {
-      ctx.reply(VALIDATION_MESSAGE);
-      return;
-    }
-    ctx.wizard.state.contactData.lName = ctx.message.text;
-    ctx.reply(EMAIL_MESSAGE);
-    return ctx.wizard.next();
-  },
-  (ctx) => {
-    // Cc email validation
-    if (ctx.message.text.match("@") === null) {
-      ctx.reply("Fiddlesticks! That's not a valid email address. Breathe in slowly and try again :)");
-      return;
-    }
-    ctx.wizard.state.contactData.email = ctx.message.text;
-    ctx.reply(CC_MESSAGE);
-    return ctx.wizard.next();
-  },
-  // Pipe first name, last name and email into the account generator script
-  async (ctx) => {
-    // Email validation
-    if (ctx.message.text.match("@") === null) {
-      ctx.reply("Fiddlesticks! That's not a valid email address. Breathe in slowly and try again :)");
-      return;
-    }
-    ctx.wizard.state.contactData.cc = ctx.message.text;
-    await ctx.reply("Thank you for your replies, I'll create your LobVR account now");
-    await ctx.reply("Please hang on tight for 1 or 2 minutes, I'm doing some extremely complex ML stuff... I'll let you know when I'm done :)");
-
-    let { fName, lName, email, cc } = ctx.wizard.state.contactData;
-    let { firstName, lastName, personalEmail, ccEmail, lobvrEmail, lobvrPass } = formatContactData([fName, lName, email, cc])
-
-    await ctx.reply("Creating LobVR account now...");
-    await createEmailAccount(firstName, lastName, lobvrEmail, lobvrPass)
-
-    await ctx.reply("Done! Inviting to ClickUp now...");
-    await inviteToClickup(lobvrEmail)
-
-    await ctx.reply("Done! Sending confirmation email now...");
-    await sendConfirmationEmail(lobvrEmail, lobvrPass, personalEmail, ccEmail, firstName)
-
-    await ctx.reply("done!");
-    await ctx.reply(`I created the account ${lobvrEmail} for our new team member ${fName} ${lName}!`);
-    await ctx.reply("k thx byeeeeeeeeee")
-
-    return ctx.scene.leave();
-  },
+  }
 );
 
 const fetchAvailableDatesWizard = new WizardScene(
