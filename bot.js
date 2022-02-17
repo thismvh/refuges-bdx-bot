@@ -34,9 +34,12 @@ bot.command("clear", (ctx) => {
 
 bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
-  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`)
-  ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`)
+  console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
+  ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
+  // return ctx.scene.enter('super-wizard', {product_id: product_id});
+  ctx.wizard.state.currentRefuge = `${BDX_REFUGES_URL}/${relativeUrl}`;
+  // return ctx.wizard.next();
 })
 
 const contactDataWizard = new WizardScene(
@@ -60,20 +63,23 @@ const contactDataWizard = new WizardScene(
         }
       });
     }
-
-    // Keep track of which button was pressed (i.e. which refuge was selected)
-
-    // Go to URL of refuge and look for available dates
+    
     ctx.wizard.state.contactData = {};
     return ctx.wizard.next();
   },
   // Ask user for the last name
   (ctx) => {
+    console.log("REACHED THE SECOND STEP!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
     // First name validation
     if (ctx.message.text.length < 2) {
       ctx.reply(VALIDATION_MESSAGE);
       return;
     }
+
+    console.log("WITHIN THE SECOND STEP, REACHED THE SECOND PART!!! THE CURRENT REFUGE IS: " + ctx.wizard.state.currentRefuge);
+
+    // Go to URL of refuge and look for available dates 
+
     ctx.wizard.state.contactData.fName = ctx.message.text;
     ctx.reply(LAST_NAME_MESSAGE);
     return ctx.wizard.next();
