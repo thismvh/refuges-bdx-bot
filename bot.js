@@ -36,7 +36,6 @@ bot.command("clear", (ctx) => {
 bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
-  console.log("THE CONTEXT IS LOOKING LIKE DIS DAWG: " + Object.keys(ctx));
   ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
   if(ctx.session == null) {
@@ -44,15 +43,20 @@ bot.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
   } else {
     ctx.session.refugeUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
   }
-  
-
   return;
+})
 
-  // return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: `${BDX_REFUGES_URL}/${relativeUrl}` });
+// Alternative approach to action on button click
+const stepHandler = new Composer();
+stepHandler.action(new RegExp("next_+", "g"), async (ctx) => {
+  var relativeUrl = ctx.match.input.substring(4 + 1);
+  await ctx.reply("This is the result you chose: " + `${BDX_REFUGES_URL}/${relativeUrl}`)
+  return ctx.scene.enter(`${ACTION_FETCH_AVAILABLE_DATES}_WIZARD_SCENE_ID`, { refugeUrl: ctx.session.refugeUrl })
 })
 
 const contactDataWizard = new WizardScene(
   'CONTACT_DATA_WIZARD_SCENE_ID', // first argument is Scene_ID, same as for BaseScene
+  stepHandler,
   // Ask user for the first name
   async (ctx) => {
     allRefuges = await findRefuges();
@@ -67,7 +71,8 @@ const contactDataWizard = new WizardScene(
         parse_mode: 'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
-           [ { text: refuge.name, callback_data: `${ACTION_FETCH_AVAILABLE_DATES}_${refuge.urlShort}` } ]
+          //  [ { text: refuge.name, callback_data: `${ACTION_FETCH_AVAILABLE_DATES}_${refuge.urlShort}` } ]
+          [ { text: refuge.name, callback_data: `next_${refuge.urlShort}` } ]
           ]
         }
       });
