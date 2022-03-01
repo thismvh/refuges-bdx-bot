@@ -201,6 +201,7 @@ const stage = new Scenes.Stage([listRefugesWizard, specificRefugeWizard, moreRef
 
 bot.use(session())
 bot.use(stage.middleware())
+// make this a cron job as well to avoid heroku sleep? execute this cron job like 2 minutes before periodicDateCheck???
 bot.launch()
 
 // This will be executed when the user inputs the command /start
@@ -225,6 +226,10 @@ expressApp.get("/", (req, res) => {
 expressApp.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
+
+// Ping heroku app every 5 minutes to prevent it from idling
+var http = require("http");
+setInterval(() => http.get(process.env.BOT_DOMAIN), 300000);
 
 async function delay(time) {
   await new Promise(resolve => setTimeout(resolve, time));
