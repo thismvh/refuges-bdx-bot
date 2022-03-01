@@ -10,6 +10,8 @@
   "dependencies": {
     "dotenv": "^16.0.0",
     "micro-bot": "^2.5.3",
-    "puppeteer": "^13.3.2"
+    "node-cron": "^3.0.0",
+    "puppeteer": "^13.3.2",
+    "shelljs": "^0.8.5"
   }
 }
