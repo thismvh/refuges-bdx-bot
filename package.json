@@ -2,10 +2,10 @@
   "name": "refuges-bdx-bot",
   "version": "1.0.0",
   "description": "A Telegram bot that reserves refuges periurbaines in Bordeaux",
-  "main": "bot.js",
+  "main": "offlineBot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "micro-bot"
+    "start": "node offlineBot.js"
   },
   "dependencies": {
     "dotenv": "^16.0.0",
