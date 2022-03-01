@@ -214,6 +214,18 @@ bot.start((ctx) => {
 process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
+// Create express server just so that Heroku recognizes this script as a web process
+const express = require('express');
+const expressApp = express();
+
+const port = process.env.PORT || 3000
+expressApp.get('/', (req, res) => {
+  res.send('Hello World!')
+})
+expressApp.listen(port, () => {
+  console.log(`Listening on port ${port}`)
+})
+
 async function delay(time) {
   await new Promise(resolve => setTimeout(resolve, time));
 }
