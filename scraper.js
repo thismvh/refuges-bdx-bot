@@ -102,7 +102,7 @@ async function periodicDateCheck(refugeUrl) {
         // Search for availableDates every 30 seconds
         // every 4 hours: 0 */4 * * *
         // every 4 hours between April and November: 0 */4 * 4-11 *
-        cron.schedule("*/30 * * * * *", async () => {
+        cron.schedule("0 */4 * 4-11 *", async () => {
             console.log("Testing cron job, current URL is: " + refugeUrl);
 
             availableDates = await getAvailableDates(refugeUrl)
