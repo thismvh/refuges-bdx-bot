@@ -12,6 +12,21 @@ class DateEvent extends EventEmitter {
 }
 const dateNotifier = new DateEvent();
 
+class Browser {
+    constructor() {
+        this.instance = puppeteer.launch({
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+        });
+    }
+
+    getBrowser() {
+        return this.instance;
+    }
+}
+
+var browserInstance;
+
 var trackedRefuges = new Set();
 
 const DEV_MODE = process.env.DEV_MODE;
@@ -25,14 +40,15 @@ const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
 // MAKE THIS A CLASS PLEASE, WOULD BE MORE ELEGANT!
 // MAKE THIS A CLASS PLEASE, WOULD BE MORE ELEGANT!
 
+function initialiseBrowser() {
+    browserInstance = new Browser();
+}
 
 async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
-    // Create browser instance
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
+    // Get browser instance
+    const browser = await browserInstance.getBrowser();
+
 
     // Open new tab
     const page = await browser.newPage();
@@ -61,7 +77,8 @@ async function findRefuges() {
         }
     ))
 
-    browser.close();
+    // Close tab to avoid memory leaks
+    page.close();
 
     return realRefuges;
 };
@@ -100,11 +117,8 @@ async function periodicDateCheck(refugeUrl) {
 
 async function getAvailableDates(refugeUrl) {
     console.log("Starting getAvailableDates process");
-    // Create browser instance
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
+    // Get browser instance
+    const browser = await browserInstance.getBrowser();
 
     // Open new tab
     const page = await browser.newPage();
@@ -140,7 +154,8 @@ async function getAvailableDates(refugeUrl) {
         await page.evaluate(e => e.click(), nextMonthButton);
     }
 
-    browser.close();
+    // Close tab to avoid memory leaks
+    page.close();
 
     return availableDates;
 }
@@ -184,14 +199,12 @@ function getRefuges(page, selector) {
     }, selector);
 };
 
-// getAvailableDates("https://lesrefuges.bordeaux-metropole.fr/la-station-orbitale")
-// findRefuges()
-
 module.exports = {
     findRefuges,
     getAvailableDates,
     getAvailableDatesDummy,
     periodicDateCheck,
     capitalise,
+    initialiseBrowser,
     dateNotifier
 }

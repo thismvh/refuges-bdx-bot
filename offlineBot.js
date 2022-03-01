@@ -1,7 +1,7 @@
 const { Composer, session, Telegraf, Stage } = require("telegraf");
 const WizardScene = require("telegraf/scenes/wizard");
 
-const { periodicDateCheck, findRefuges, getAvailableDatesDummy, capitalise, dateNotifier } = require("./scraper");
+const { periodicDateCheck, findRefuges, initialiseBrowser, capitalise, dateNotifier } = require("./scraper");
 
 const token = process.env.BOT_TOKEN_OFF
 if (token === undefined) {
@@ -68,6 +68,8 @@ stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
 const listRefugesWizard = new WizardScene(
   "LIST_REFUGES_SCENE",
   async (ctx) => {
+    initialiseBrowser(); 
+
     await delay(2000);
     await ctx.reply(CHIANT_CHECK_REFUGES);
     await delay(4000);
@@ -213,7 +215,5 @@ process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
 async function delay(time) {
-  console.log('start timer');
   await new Promise(resolve => setTimeout(resolve, time));
-  console.log('after 1 second');
 }
