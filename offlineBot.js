@@ -16,11 +16,21 @@ const LIST_REFUGES_SCENE = "LIST_REFUGES_SCENE"
 const SPECIFIC_REFUGE_SCENE = "SPECIFIC_REFUGE_SCENE"
 const MORE_REFUGES_SCENE = "MORE_REFUGES_SCENE"
 
+// Smiley codes
+const GRIN = "\u{1F601}"
+const BROKEN_HEART = "\u{1F494}"
+const ROLLING_EYES = "\u{1F644}"
+const WINK = "\u{1F609}"
+const PARTYING_FACE = "\u{1F973}"
+const SLEEPING_FACE = "\u{1F634}"
+const WAVING_HAND = "\u{1F44B}"
+
 // Pre-defined bot messages
-const WELCOME_MESSAGE = "Coucou, j'ai entendu tu veux reserver un refuge? :D";
-const CHIANT_CHECK_REFUGES = "Mais pfff, c'est chiant d'aller à la site web tout le temps pour voir s'il y a des places, non?"
-const TINQUIETE_JY_VAIS = "T'inquièèèèète, j'y vais à ta place et quand je vois des places disponibles je t'envoie un message et puis tu peux être la première à réserver ;)"
-const WHICH_REFUGE_MESSAGE = "Quel refuge est-ce que tu veux reserver?";
+const WELCOME_MESSAGE = `Coucou, j'ai entendu tu veux reserver un refuge? ${GRIN}`;
+const CHIANT_CHECK_REFUGES = `Mais pfff, c'est chiant d'aller à la site web tout le temps pour voir s'il y a des places, non? ${ROLLING_EYES}`
+const TINQUIETE_JY_VAIS = `T'inquièèèèète, j'y vais à ta place et quand je vois des places disponibles je t'envoie un message et puis tu peux être la première à réserver ${WINK}`
+const WHICH_REFUGE_MESSAGE = `Quel refuge est-ce que tu veux reserver?`;
+const GOING_TO_SLEEP = `Ok, je vais faire dodo alors ${SLEEPING_FACE} Réveille-moi en écrivant /start dans ce chat ou en appuyant sur les /start bleus. Tschuuuus! ${WAVING_HAND}`
 
 // Bot actions
 const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
@@ -52,7 +62,7 @@ stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
   if(wantsMoreRefuges)
     await ctx.reply("Ok, click sur un autre refuge donc! :)");
   else
-    await ctx.reply("Ok, je vais faire dodo alors :) Réveille-moi en écrivant /start dans ce chat ou en appuyant sur les /start bleus. Tschuuuus!")
+    await ctx.reply(GOING_TO_SLEEP)
 })
 
 const listRefugesWizard = new WizardScene(
@@ -127,7 +137,7 @@ const specificRefugeWizard = new WizardScene(
       if(firstNo || hasAvailableDates) {
         firstNo = false;
         hasAvailableDates = false;
-        await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} </3 Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
+        await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
         await delay(3000)
         return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: ctx.wizard.state.refugeUrl });
       }
@@ -140,7 +150,7 @@ const specificRefugeWizard = new WizardScene(
       if(firstYes || !hasAvailableDates) {
         firstYes = false;
         hasAvailableDates = true;
-        await ctx.reply(`Woooohoooo!! Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${ctx.wizard.state.refugeUrl}`)
+        await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${ctx.wizard.state.refugeUrl}`)
         return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: ctx.wizard.state.refugeUrl });
       }
     }
