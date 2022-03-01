@@ -1,5 +1,5 @@
-const { Composer, session, Telegraf, Stage } = require("telegraf");
-const WizardScene = require("telegraf/scenes/wizard");
+const { Composer, session, Telegraf, Scenes } = require("telegraf");
+const WizardScene = Scenes.WizardScene;
 
 const { periodicDateCheck, findRefuges, initialiseBrowser, capitalise, dateNotifier } = require("./scraper");
 
@@ -197,7 +197,7 @@ const moreRefugesWizard = new WizardScene(
 )
 
 const bot = new Telegraf(token)
-const stage = new Stage([listRefugesWizard, specificRefugeWizard, moreRefugesWizard])
+const stage = new Scenes.Stage([listRefugesWizard, specificRefugeWizard, moreRefugesWizard])
 
 bot.use(session())
 bot.use(stage.middleware())
