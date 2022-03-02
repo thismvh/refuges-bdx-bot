@@ -3,9 +3,9 @@ const WizardScene = Scenes.WizardScene;
 
 const { periodicDateCheck, findRefuges, initialiseBrowser, capitalise, dateNotifier } = require("./scraper");
 
-const token = process.env.BOT_TOKEN_OFF
+const token = process.env.BOT_TOKEN
 if (token === undefined) {
-  throw new Error("BOT_TOKEN_OFF must be provided!")
+  throw new Error("BOT_TOKEN must be provided!")
 }
 
 // Refuges website
