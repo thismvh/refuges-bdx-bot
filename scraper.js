@@ -26,6 +26,7 @@ class Browser {
 }
 
 var browserInstance;
+var browserEndpoint;
 
 var trackedRefuges = new Set();
 
@@ -40,14 +41,23 @@ const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
 // MAKE THIS A CLASS PLEASE, WOULD BE MORE ELEGANT!
 // MAKE THIS A CLASS PLEASE, WOULD BE MORE ELEGANT!
 
-function initialiseBrowser() {
-    browserInstance = new Browser();
+
+// Does this browser instance time out? Maybe we should create a new browser instance every 30 minutes in sync with the cron job?
+async function initialiseBrowser() {
+    browserInstance = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
+
+    // Store browser endpoint to be able to reconnect later
+    browserEndpoint = browserInstance.wsEndpoint();
+    browserInstance.disconnect();
 }
 
 async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
-    // Get browser instance
-    const browser = await browserInstance.getBrowser();
+    // Connect to browser instance
+    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint })
 
 
     // Open new tab
@@ -117,8 +127,8 @@ async function periodicDateCheck(refugeUrl) {
 
 async function getAvailableDates(refugeUrl) {
     console.log("Starting getAvailableDates process");
-    // Get browser instance
-    const browser = await browserInstance.getBrowser();
+    // Connect to browser instance
+    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint })
 
     // Open new tab
     const page = await browser.newPage();

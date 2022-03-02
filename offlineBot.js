@@ -26,10 +26,10 @@ const SLEEPING_FACE = "\u{1F634}"
 const WAVING_HAND = "\u{1F44B}"
 
 // Pre-defined bot messages
-const WELCOME_MESSAGE = `Coucou, j'ai entendu tu veux reserver un refuge? ${GRIN}`;
+const WELCOME_MESSAGE = `Coucou, j'ai entendu tu veux réserver un refuge? ${GRIN}`;
 const CHIANT_CHECK_REFUGES = `Mais pfff, c'est chiant d'aller à la site web tout le temps pour voir s'il y a des places, non? ${ROLLING_EYES}`
 const TINQUIETE_JY_VAIS = `T'inquièèèèète, j'y vais à ta place et quand je vois des places disponibles je t'envoie un message et puis tu peux être la première à réserver ${WINK}`
-const WHICH_REFUGE_MESSAGE = `Quel refuge est-ce que tu veux reserver?`;
+const WHICH_REFUGE_MESSAGE = `Quel refuge est-ce que tu veux réserver?`;
 const GOING_TO_SLEEP = `Ok, je vais faire dodo alors ${SLEEPING_FACE} Réveille-moi en écrivant /start dans ce chat ou en appuyant sur les /start bleus. Tschuuuus! ${WAVING_HAND}`
 
 // Bot actions
