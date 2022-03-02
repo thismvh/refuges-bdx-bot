@@ -68,7 +68,7 @@ stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
 const listRefugesWizard = new WizardScene(
   "LIST_REFUGES_SCENE",
   async (ctx) => {
-    initialiseBrowser(); 
+    await initialiseBrowser(); 
 
     await delay(2000);
     await ctx.reply(CHIANT_CHECK_REFUGES);
@@ -226,13 +226,6 @@ expressApp.get("/", (req, res) => {
 expressApp.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
-
-// Ping heroku app every 30 minutes to prevent it from idling
-var http = require("http");
-setInterval(() => {
-  console.log("Pinging Heroku now...")
-  http.get(process.env.BOT_DOMAIN)
-}, 30 * 60 * 1000);
 
 async function delay(time) {
   await new Promise(resolve => setTimeout(resolve, time));
