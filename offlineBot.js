@@ -227,6 +227,13 @@ expressApp.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
 
+// Ping heroku app every 20 minutes to prevent it from idling
+var http = require("http");
+setInterval(() => {
+  console.log("Pinging Heroku from offlineBot now...")
+  http.get(process.env.BOT_DOMAIN)
+}, 20 * 60 * 1000);
+
 async function delay(time) {
   await new Promise(resolve => setTimeout(resolve, time));
 }

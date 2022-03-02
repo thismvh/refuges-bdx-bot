@@ -209,6 +209,13 @@ function getRefuges(page, selector) {
     }, selector);
 };
 
+// Ping heroku app every 20 minutes to prevent it from idling
+var http = require("http");
+setInterval(() => {
+  console.log("Pinging Heroku from scraper now...")
+  http.get(process.env.BOT_DOMAIN)
+}, 20 * 60 * 1000);
+
 module.exports = {
     findRefuges,
     getAvailableDates,
