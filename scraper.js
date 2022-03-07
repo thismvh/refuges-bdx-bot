@@ -3,29 +3,6 @@ const puppeteer = require("puppeteer");
 const cron = require("node-cron");
 const { writeFileSync } = require("fs");
 
-const EventEmitter = require('events');
-class DateEvent extends EventEmitter {
-    constructor() {
-        super()
-        this.firstYes = true;
-        this.firstNo = true;
-    }
-}
-const dateNotifier = new DateEvent();
-
-class Browser {
-    constructor() {
-        this.instance = puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"]
-        });
-    }
-
-    getBrowser() {
-        return this.instance;
-    }
-}
-
 var browserInstance;
 var browserEndpoint;
 
