@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Refuge availability data generated during execution
+data

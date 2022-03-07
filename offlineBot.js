@@ -1,7 +1,8 @@
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
+const { readFileSync } = require("fs");
 
-const { periodicDateCheck, findRefuges, initialiseBrowser, capitalise, dateNotifier } = require("./scraper");
+const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
 
 const token = process.env.BOT_TOKEN
 if (token === undefined) {
@@ -39,8 +40,10 @@ const ACTION_MORE_REFUGES = "MORE_REFUGES";
 var trackedRefuges = new Set();
 
 const stepHandler = new Composer()
-stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) => {
+stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
+  var refugeName = relativeUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
   var fullUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
@@ -49,8 +52,24 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), (ctx) =
     return
   }
 
+  // Save refuge as already seen
   trackedRefuges.add(fullUrl);
-  return ctx.scene.enter(SPECIFIC_REFUGE_SCENE, { refugeUrl: fullUrl })
+
+  // Little feedback to user to keep attention
+  await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`);
+  await delay(1500);
+
+  // Check JSON file and ctx.reply directly from here?
+  var refugeAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
+  var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl];
+
+  if(availabilityCurrentRefuge.length == 0) 
+    await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
+  else
+    await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${fullUrl}`);
+  
+  await delay(1000);
+  return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: fullUrl });
 })
 
 stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
@@ -115,61 +134,6 @@ const listRefugesWizard = new WizardScene(
   }
 )
 
-const specificRefugeWizard = new WizardScene(
-  "SPECIFIC_REFUGE_SCENE",
-  async (ctx) => {
-    console.log("This is ctx.wizard.state.refugeUrl in new scene: " + ctx.wizard.state.refugeUrl)
-    // TODO: REFACTOR THIS UGLINESS
-    var refugeName = ctx.wizard.state.refugeUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
-    await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`)
-    // Go to URL of refuge and look for available dates
-    await periodicDateCheck(ctx.wizard.state.refugeUrl);
-    // await getAvailableDatesDummy(ctx.wizard.state.refugeUrl)
-
-    // Properly subscribe and unsubscribe listeners of dateNotifier to avoid memory leaks
-    // dateNotifier.setMaxListeners(dateNotifier.getMaxListeners() + 1)
-    dateNotifier.on("noDates", onNoDates)
-    dateNotifier.on("yesDates", onYesDates)
-
-    var hasAvailableDates = false;
-    var firstNo = true;
-    async function onNoDates() {
-      // await cleanup()
-      console.log("No dates available!!");
-      if(firstNo || hasAvailableDates) {
-        firstNo = false;
-        hasAvailableDates = false;
-        await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
-        await delay(3000)
-        return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: ctx.wizard.state.refugeUrl });
-      }
-    }
-
-    var firstYes = true;
-    async function onYesDates() {
-      // await cleanup()
-      console.log("Yes dates available!!");
-      if(firstYes || !hasAvailableDates) {
-        firstYes = false;
-        hasAvailableDates = true;
-        await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${ctx.wizard.state.refugeUrl}`)
-        return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: ctx.wizard.state.refugeUrl });
-      }
-    }
-
-    async function cleanup() {
-      dateNotifier.removeListener("noDates", onNoDates)
-      dateNotifier.removeListener("yesDates", onYesDates)
-      // this promise is done, so we lower the maximum number of listeners
-      dateNotifier.setMaxListeners(dateNotifier.getMaxListeners() - 1)
-    }
-  },
-  async (ctx) => {
-    await ctx.reply("Done from scene: " + SPECIFIC_REFUGE_SCENE)
-    return await ctx.scene.leave()
-  }
-)
-
 const moreRefugesWizard = new WizardScene(
   "MORE_REFUGES_SCENE",
   async (ctx) => {
@@ -197,7 +161,7 @@ const moreRefugesWizard = new WizardScene(
 )
 
 const bot = new Telegraf(token)
-const stage = new Scenes.Stage([listRefugesWizard, specificRefugeWizard, moreRefugesWizard])
+const stage = new Scenes.Stage([listRefugesWizard, moreRefugesWizard])
 
 bot.use(session())
 bot.use(stage.middleware())
@@ -226,6 +190,12 @@ expressApp.get("/", (req, res) => {
 expressApp.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
+
+// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
+// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
+// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
+// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
+
 
 // Ping heroku app every 20 minutes to prevent it from idling
 var http = require("http");

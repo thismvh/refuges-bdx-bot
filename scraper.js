@@ -1,6 +1,7 @@
 require('dotenv').config();
 const puppeteer = require("puppeteer");
 const cron = require("node-cron");
+const { writeFileSync } = require("fs");
 
 const EventEmitter = require('events');
 class DateEvent extends EventEmitter {
@@ -58,7 +59,6 @@ async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
     // Connect to browser instance
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint })
-
 
     // Open new tab
     const page = await browser.newPage();
@@ -145,7 +145,7 @@ async function getAvailableDates(refugeUrl) {
     var availableDates = [];
     var monthsInAdvance = 5;
     for (let index = 0; index < [...Array(monthsInAdvance).keys()].length; index++) {
-        console.log("availableDates has length" + availableDates.length)
+        console.log(refugeUrl + ": availableDates has length " + availableDates.length)
         // Get available dates of current month
         try {
             await page.waitForSelector(daySelector, { timeout: 1000 })
@@ -193,9 +193,6 @@ function capitalise(string) {
 
 function getRefuges(page, selector) {
     return page.evaluate((sel) => {
-        var images = []
-        var urls = []
-        var names = []
         let elements = Array.from(document.querySelectorAll(sel));
         let refuges = elements.map(element => {
             return { 
@@ -209,12 +206,37 @@ function getRefuges(page, selector) {
     }, selector);
 };
 
+async function writeAvailabilitiesToJson() {
+    // Refuge data that will be saved in JSON
+    var refugeAvailabilities = {};
+
+    // Initialise browser
+    await initialiseBrowser(); 
+
+    // Get all refuges
+    var allRefuges = await findRefuges();
+
+    // Get availabilities for each refuges
+    for (const refuge of allRefuges) {
+        var availiableDates = await getAvailableDates(refuge.url);
+        refugeAvailabilities[refuge.urlShort] = availiableDates;
+    }
+
+    // Write refuge availabilities to JSON file
+    writeFileSync("./data/refuges.json", JSON.stringify(refugeAvailabilities));
+}
+
 // Ping heroku app every 20 minutes to prevent it from idling
 var http = require("http");
 setInterval(() => {
   console.log("Pinging Heroku from scraper now...")
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
+
+cron.schedule("* * * * *", () => {
+    console.log("Writing availabilities to JSON now...");
+    writeAvailabilitiesToJson();
+})
 
 module.exports = {
     findRefuges,
@@ -223,5 +245,6 @@ module.exports = {
     periodicDateCheck,
     capitalise,
     initialiseBrowser,
-    dateNotifier
+    dateNotifier,
+    writeAvailabilitiesToJson
 }
