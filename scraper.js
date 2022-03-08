@@ -19,8 +19,8 @@ var trackedRefuges = new Set();
 
 // Does this browser instance time out? Maybe we should create a new browser instance every 30 minutes in sync with the cron job?
 async function initialiseBrowser() {
-    if(browserInstance !== undefined)
-        return
+    // if(browserInstance !== undefined)
+    //     return
     
     console.log("No browserInstance yet, creating now...");
     browserInstance = await puppeteer.launch({
