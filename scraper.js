@@ -27,8 +27,13 @@ async function initialiseBrowser() {
     
     browserInstance = await puppeteer.launch({
         headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox"]
-    });
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-dev-shm-usage",
+          "--single-process"
+        ]
+      });
 
     // Store browser endpoint to be able to reconnect later
     browserEndpoint = browserInstance.wsEndpoint();
