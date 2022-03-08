@@ -1,7 +1,7 @@
 require('dotenv').config();
 const puppeteer = require("puppeteer");
 const cron = require("node-cron");
-const { writeFileSync, readFileSync, existsSync } = require("fs");
+const { writeFileSync, readFileSync, existsSync, mkdirSync } = require("fs");
 
 var browserInstance;
 var browserEndpoint;
@@ -25,6 +25,7 @@ async function initialiseBrowser() {
     if(browserInstance !== undefined)
         return
     
+    console.log("No browserInstance yet, creating now...");
     browserInstance = await puppeteer.launch({
         headless: true,
         args: [
@@ -184,11 +185,16 @@ async function writeAvailabilitiesToJson() {
         refugeAvailabilities[refuge.urlShort] = availiableDates;
     }
 
-    // Write refuge availabilities to JSON file (if there are any new changes)
-    var previousAvailabilities = existsSync("./data/refuges.json") ?
-        JSON.parse(readFileSync("./data/refuges.json")) :
-        {}
+    // Read previous availabilities (if available)
+    var previousAvailabilities;
+    if (!existsSync("./data")) {
+        mkdirSync("./data");
+        previousAvailabilities = {};
+    } else 
+        previousAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
+        
 
+    // Write refuge availabilities to JSON file (if there are any new changes)
     if(JSON.stringify(refugeAvailabilities) !== JSON.stringify(previousAvailabilities))
         writeFileSync("./data/refuges.json", JSON.stringify(refugeAvailabilities));
 }
