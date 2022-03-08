@@ -39,6 +39,7 @@ async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
     // Connect to browser instance
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
+    console.log("Successfully connected to browser!!");
 
     // Open new tab
     const page = await browser.newPage();
@@ -47,7 +48,6 @@ async function findRefuges() {
     await page.goto(BDX_REFUGES_URL);
 
     // Wait for refuges to load
-    // Use DOMRegex after all?
     var allRefugesSelector = "[class*='colonne-1 field--type-image'] a, [class*='colonne-2 field--type-image'] a, [class*='colonne-3 field--type-image'] a";
     var fakeRefugesSelector = "a[href*='les-refuges']";
     await page.waitForSelector(allRefugesSelector);
@@ -66,6 +66,8 @@ async function findRefuges() {
             img: refuge.img
         }
     ))
+
+    console.log(`Real refuges found: ${realRefuges}`)
 
     // Close tab to avoid memory leaks
     await page.close();
