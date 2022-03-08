@@ -62,8 +62,11 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   await delay(1500);
 
   // Only proceed if data file actually exists
-  if(!existsSync("./data/refuges.json"))
-    return
+  if(!existsSync("./data/refuges.json")) {
+    await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
+    await delay(1000);
+    return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: fullUrl });
+  }
 
   var refugeAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
   var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl];
