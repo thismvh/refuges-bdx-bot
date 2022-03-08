@@ -22,6 +22,9 @@ const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
 
 // Does this browser instance time out? Maybe we should create a new browser instance every 30 minutes in sync with the cron job?
 async function initialiseBrowser() {
+    if(browserInstance !== undefined)
+        return
+    
     browserInstance = await puppeteer.launch({
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"]
