@@ -1,6 +1,6 @@
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
-const { readFileSync } = require("fs");
+const { readFileSync, watchFile, existsSync } = require("fs");
 
 const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
 
@@ -8,6 +8,8 @@ const token = process.env.BOT_TOKEN
 if (token === undefined) {
   throw new Error("BOT_TOKEN must be provided!")
 }
+
+var chatId = null;
 
 // Refuges website
 const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
@@ -59,7 +61,10 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`);
   await delay(1500);
 
-  // Check JSON file and ctx.reply directly from here?
+  // Only proceed if data file actually exists
+  if(!existsSync("./data/refuges.json"))
+    return
+
   var refugeAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
   var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl];
 
@@ -170,6 +175,9 @@ bot.launch()
 
 // This will be executed when the user inputs the command /start
 bot.start((ctx) => {
+  // Save chatId for later
+  chatId = ctx.chat.id;
+
   // Greet user
   ctx.reply(WELCOME_MESSAGE)
     .then(() => ctx.scene.enter(LIST_REFUGES_SCENE));
@@ -191,18 +199,28 @@ expressApp.listen(port, () => {
   console.log(`Listening on port ${port}`)
 })
 
-// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
-// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
-// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
-// Somehow make a cron job that reads the refuges json file periodically and sends a message when new dates are available
-
-
 // Ping heroku app every 20 minutes to prevent it from idling
 var http = require("http");
 setInterval(() => {
   console.log("Pinging Heroku from offlineBot now...")
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
+
+watchFile("./data/refuges.json", () => {
+  console.log("Current chatId is: " + chatId)
+  if(chatId === null)
+    return
+
+  var fileData = JSON.parse(readFileSync("./data/refuges.json"));
+
+  var refuges = Array.from(trackedRefuges);
+  for (const refuge of refuges) {
+    var refugeShortUrl = refuge.replace(/^(?:\/\/|[^/]+)*\//, '');
+    var refugeName = refugeShortUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+    if(!!fileData[refugeShortUrl] && fileData[refugeShortUrl].length > 0)
+      bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)
+  }
+})
 
 async function delay(time) {
   await new Promise(resolve => setTimeout(resolve, time));

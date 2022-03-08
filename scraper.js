@@ -1,7 +1,7 @@
 require('dotenv').config();
 const puppeteer = require("puppeteer");
 const cron = require("node-cron");
-const { writeFileSync } = require("fs");
+const { writeFileSync, readFileSync, existsSync } = require("fs");
 
 var browserInstance;
 var browserEndpoint;
@@ -35,7 +35,7 @@ async function initialiseBrowser() {
 async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
     // Connect to browser instance
-    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint })
+    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
 
     // Open new tab
     const page = await browser.newPage();
@@ -65,47 +65,16 @@ async function findRefuges() {
     ))
 
     // Close tab to avoid memory leaks
-    page.close();
+    await page.close();
+    browser.disconnect();
 
     return realRefuges;
 };
 
-async function periodicDateCheck(refugeUrl) {
-    // Avoid starting multiple cron jobs for the same refuge
-    if(trackedRefuges.has(refugeUrl)) {
-        setImmediate(() => dateNotifier.emit("knownRefuge"))
-    } else {
-        // Search for availale dates instantly without cron job to give first instant feedback to user
-        var availableDates = await getAvailableDates(refugeUrl);
-        console.log("Gonna dispatch event now, availableDates has length: " + availableDates.length)
-        if (availableDates.length < 1) 
-            setImmediate(() => dateNotifier.emit("noDates"))  // Have to wrap it in setImmediate to make it an async call   
-        else
-            setImmediate(() => dateNotifier.emit("yesDates")) // Have to wrap it in setImmediate to make it an async call
-        
-        // For future iterations: note that current refuge has hereby been seen
-        trackedRefuges.add(refugeUrl);
-
-        // Search for availableDates every 30 seconds
-        // every 4 hours: 0 */4 * * *
-        // every 4 hours between April and November: 0 */4 * 4-11 *
-        cron.schedule("1 */1 * 3-11 *", async () => {
-            console.log("Testing cron job, current URL is: " + refugeUrl);
-
-            availableDates = await getAvailableDates(refugeUrl)
-
-            if (availableDates.length < 1) 
-                dateNotifier.emit("noDates");  // No need to wrap it in setImmediate because cron job itself is an async call
-            else
-                dateNotifier.emit("yesDates"); // No need to wrap it in setImmediate because cron job itself is an async call
-        });
-    }
-}
-
 async function getAvailableDates(refugeUrl) {
     console.log("Starting getAvailableDates process");
     // Connect to browser instance
-    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint })
+    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
 
     // Open new tab
     const page = await browser.newPage();
@@ -131,6 +100,8 @@ async function getAvailableDates(refugeUrl) {
         }
         
         var newDates = await page.$$(daySelector)
+        // Convert to numbers since JSON can't serialise cyclical references in DOM nodes
+        newDates = [...Array(newDates.length).keys()]
 
         // Add available dates from this month to the total
         availableDates = availableDates.concat(newDates)
@@ -142,7 +113,8 @@ async function getAvailableDates(refugeUrl) {
     }
 
     // Close tab to avoid memory leaks
-    page.close();
+    await page.close();
+    browser.disconnect();
 
     return availableDates;
 }
@@ -199,8 +171,13 @@ async function writeAvailabilitiesToJson() {
         refugeAvailabilities[refuge.urlShort] = availiableDates;
     }
 
-    // Write refuge availabilities to JSON file
-    writeFileSync("./data/refuges.json", JSON.stringify(refugeAvailabilities));
+    // Write refuge availabilities to JSON file (if there are any new changes)
+    var previousAvailabilities = existsSync("./data/refuges.json") ?
+        JSON.parse(readFileSync("./data/refuges.json")) :
+        {}
+
+    if(JSON.stringify(refugeAvailabilities) !== JSON.stringify(previousAvailabilities))
+        writeFileSync("./data/refuges.json", JSON.stringify(refugeAvailabilities));
 }
 
 // Ping heroku app every 20 minutes to prevent it from idling
@@ -219,9 +196,7 @@ module.exports = {
     findRefuges,
     getAvailableDates,
     getAvailableDatesDummy,
-    periodicDateCheck,
     capitalise,
     initialiseBrowser,
-    dateNotifier,
     writeAvailabilitiesToJson
 }
