@@ -43,15 +43,18 @@ async function findRefuges() {
 
     // Open new tab
     const page = await browser.newPage();
+    console.log("Successfully opened new page!!");
 
     // Go to one.com login page
     await page.goto(BDX_REFUGES_URL);
+    console.log("Successfully went to refuges Bordeaux website!!");
 
     // Wait for refuges to load
     var allRefugesSelector = "[class*='colonne-1 field--type-image'] a, [class*='colonne-2 field--type-image'] a, [class*='colonne-3 field--type-image'] a";
     var fakeRefugesSelector = "a[href*='les-refuges']";
     await page.waitForSelector(allRefugesSelector);
     await page.waitForSelector(fakeRefugesSelector);
+    console.log("Successfully waited for selectors!!");
     
     // Get list of all refuges
     var allRefuges = await getRefuges(page, allRefugesSelector);
