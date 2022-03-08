@@ -3,15 +3,12 @@ const puppeteer = require("puppeteer");
 const cron = require("node-cron");
 const { writeFileSync, readFileSync, existsSync, mkdirSync } = require("fs");
 
+const { BDX_REFUGES_URL, DATA_DIR_PATH, DATA_FILE_NAME } = require("./constants");
+
 var browserInstance;
 var browserEndpoint;
 
 var trackedRefuges = new Set();
-
-const DEV_MODE = process.env.DEV_MODE;
-var timesCalled = 0;
-
-const BDX_REFUGES_URL = "https://lesrefuges.bordeaux-metropole.fr";
 
 // MAKE THIS A CLASS PLEASE, WOULD BE MORE ELEGANT!
 // MAKE THIS A CLASS PLEASE, WOULD BE MORE ELEGANT!
@@ -39,6 +36,13 @@ async function initialiseBrowser() {
     // Store browser endpoint to be able to reconnect later
     browserEndpoint = browserInstance.wsEndpoint();
     browserInstance.disconnect();
+}
+
+async function closeBrowser() {
+    if(browserInstance === undefined)
+        return
+
+    browserInstance.close();
 }
 
 async function findRefuges() {
@@ -76,7 +80,7 @@ async function findRefuges() {
         }
     ))
 
-    console.log(`Real refuges found: ${realRefuges}`)
+    console.log(`Real refuges found: ${realRefuges.length}`)
 
     // Close tab to avoid memory leaks
     await page.close();
@@ -133,23 +137,6 @@ async function getAvailableDates(refugeUrl) {
     return availableDates;
 }
 
-async function getAvailableDatesDummy(refugeUrl) {
-    cron.schedule("*/2 * * * * *", () => {
-        console.log("Testing cron job, current URL is: " + refugeUrl);
-        if (timesCalled < 3) {
-            console.log("timesCalled is: "  + timesCalled)
-            timesCalled++
-            dateNotifier.emit("yesDates");
-        }
-        else {
-            timesCalled = 0;
-            dateNotifier.emit("noDates");
-        }
-    });
-
-    return dateNotifier;
-}
-
 function capitalise(string) {
     return string.charAt(0).toUpperCase() + string.slice(1)
 }
@@ -185,18 +172,21 @@ async function writeAvailabilitiesToJson() {
         refugeAvailabilities[refuge.urlShort] = availiableDates;
     }
 
+    // Close browser
+    await closeBrowser();
+
     // Read previous availabilities (if available)
     var previousAvailabilities;
-    if (!existsSync("./data")) {
-        mkdirSync("./data");
+    if (!existsSync(DATA_DIR_PATH)) {
+        mkdirSync(DATA_DIR_PATH);
         previousAvailabilities = {};
     } else 
-        previousAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
+        previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
         
 
     // Write refuge availabilities to JSON file (if there are any new changes)
     if(JSON.stringify(refugeAvailabilities) !== JSON.stringify(previousAvailabilities))
-        writeFileSync("./data/refuges.json", JSON.stringify(refugeAvailabilities));
+        writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(refugeAvailabilities));
 }
 
 // Ping heroku app every 20 minutes to prevent it from idling
@@ -214,7 +204,6 @@ cron.schedule("* * * * *", () => {
 module.exports = {
     findRefuges,
     getAvailableDates,
-    getAvailableDatesDummy,
     capitalise,
     initialiseBrowser,
     writeAvailabilitiesToJson
