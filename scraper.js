@@ -19,10 +19,6 @@ var trackedRefuges = new Set();
 
 // Does this browser instance time out? Maybe we should create a new browser instance every 30 minutes in sync with the cron job?
 async function initialiseBrowser() {
-    // if(browserInstance !== undefined)
-    //     return
-    
-    console.log("No browserInstance yet, creating now...");
     browserInstance = await puppeteer.launch({
         headless: true,
         args: [
@@ -50,22 +46,22 @@ async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
     // Connect to browser instance
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
-    console.log("Successfully connected to browser!!");
+    // console.log("Successfully connected to browser!!");
 
     // Open new tab
     const page = await browser.newPage();
-    console.log("Successfully opened new page!!");
+    // console.log("Successfully opened new page!!");
 
     // Go to one.com login page
     await page.goto(BDX_REFUGES_URL);
-    console.log("Successfully went to refuges Bordeaux website!!");
+    // console.log("Successfully went to refuges Bordeaux website!!");
 
     // Wait for refuges to load
     var allRefugesSelector = "[class*='colonne-1 field--type-image'] a, [class*='colonne-2 field--type-image'] a, [class*='colonne-3 field--type-image'] a";
     var fakeRefugesSelector = "a[href*='les-refuges']";
     await page.waitForSelector(allRefugesSelector);
     await page.waitForSelector(fakeRefugesSelector);
-    console.log("Successfully waited for selectors!!");
+    // console.log("Successfully waited for selectors!!");
     
     // Get list of all refuges
     var allRefuges = await getRefuges(page, allRefugesSelector);
@@ -81,7 +77,7 @@ async function findRefuges() {
         }
     ))
 
-    console.log(`Real refuges found: ${realRefuges.length}`)
+    // console.log(`Real refuges found: ${realRefuges.length}`)
 
     // Close tab to avoid memory leaks
     await page.close();
@@ -168,9 +164,11 @@ async function writeAvailabilitiesToJson() {
     var allRefuges = await findRefuges();
 
     // Get availabilities for each refuges
-    for (const refuge of allRefuges) {
-        var availiableDates = await getAvailableDates(refuge.url);
-        refugeAvailabilities[refuge.urlShort] = availiableDates;
+    var availableDates = await Promise.all(allRefuges.map(refuge => getAvailableDates(refuge.url)));
+    for (let index = 0; index < allRefuges.length; index++) {
+        var refuge = allRefuges[index];
+        var dates = availableDates[index];
+        refugeAvailabilities[refuge.urlShort] = dates;
     }
 
     // Close browser
