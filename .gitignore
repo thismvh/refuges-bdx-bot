@@ -105,3 +105,5 @@ dist
 
 # Refuge availability data generated during execution
 data
+static-html
+test
