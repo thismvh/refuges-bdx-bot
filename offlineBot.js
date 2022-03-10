@@ -1,14 +1,17 @@
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
-const { readFileSync, watchFile, existsSync } = require("fs");
+const { readFileSync, watchFile, existsSync, mkdirSync, writeFileSync } = require("fs");
 
 const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
 const { 
   ACTION_FETCH_AVAILABLE_DATES,
   ACTION_MORE_REFUGES,
+  ACTION_SCHEDULE_DATE,
   BDX_REFUGES_URL,
   LIST_REFUGES_SCENE,
   MORE_REFUGES_SCENE,
+  SCHEDULE_DATE_SCENE,
+  TRIGGER_DATE_SCHEDULING_SCENE,
   PARTYING_FACE,
   BROKEN_HEART,
   WELCOME_MESSAGE,
@@ -16,12 +19,13 @@ const {
   TINQUIETE_JY_VAIS,
   WHICH_REFUGE_MESSAGE,
   GOING_TO_SLEEP,
-  
+  DATA_DIR_PATH,
+  DATA_FILE_NAME
 } = require("./constants");
 
-const token = process.env.BOT_TOKEN
+const token = process.env.BOT_TOKEN_OFF
 if (token === undefined) {
-  throw new Error("BOT_TOKEN must be provided!")
+  throw new Error("BOT_TOKEN_OFF must be provided!")
 }
 
 var chatId = null;
@@ -52,19 +56,22 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   if(!existsSync("./data/refuges.json")) {
     await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
     await delay(1000);
-    return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: fullUrl });
+    return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
   }
 
   var refugeAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
-  var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl];
+  var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl].availableDates;
 
-  if(availabilityCurrentRefuge.length == 0) 
-    await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
-  else
+  if(availabilityCurrentRefuge.length == 0) {
+    await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART}`);
+    await delay(1000);
+    return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
+  }
+  else {
     await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${fullUrl}`);
-  
-  await delay(1000);
-  return ctx.scene.enter(MORE_REFUGES_SCENE, { refugeUrl: fullUrl });
+    await delay(1000);
+    return ctx.scene.enter(MORE_REFUGES_SCENE);
+  }
 })
 
 stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
@@ -79,8 +86,25 @@ stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
     await ctx.reply(GOING_TO_SLEEP)
 })
 
+stepHandler.action(new RegExp(ACTION_SCHEDULE_DATE + "_+", "g"), async (ctx) => {
+  var scheduleDateAnswer = ctx.match.input.substring(ACTION_SCHEDULE_DATE.length + 1);
+  var wantsDateSchedule = /_YES/.test(scheduleDateAnswer);
+  var relativeUrl = scheduleDateAnswer.match(/(.*)?_/)[1];
+
+  console.log("scheduleDateAnswer is looking like this: " + scheduleDateAnswer)
+
+  if(wantsDateSchedule) {
+    await ctx.reply("Ok, quels jours est\-ce que tu veux réserver? Par exemple, si c'est le 3 juin et le 19 juillet, écri-les comme ça: 03.06, 19.07");
+    return ctx.scene.enter(TRIGGER_DATE_SCHEDULING_SCENE, { refugeUrlShort: relativeUrl });
+  }
+  else {
+    await ctx.reply("Ok, cool :)");
+    return ctx.scene.enter(MORE_REFUGES_SCENE);
+  }
+})
+
 const listRefugesWizard = new WizardScene(
-  "LIST_REFUGES_SCENE",
+  LIST_REFUGES_SCENE,
   async (ctx) => {
     await initialiseBrowser(); 
 
@@ -129,8 +153,78 @@ const listRefugesWizard = new WizardScene(
   }
 )
 
+const scheduleDateWizard = new WizardScene(
+  SCHEDULE_DATE_SCENE,
+  async (ctx) => {
+    console.log("Arrived at SCHEDULE_DATE_SCENE")
+    await ctx.reply("Est\\-ce que tu veux me dire le jour qui tu veux réserver et alors je t'envoie un message quand il y a des places ce jour\\-là?", {
+      parse_mode: "MarkdownV2",
+      reply_markup: {
+        inline_keyboard: [
+          [ 
+            { text: "Oui", callback_data: `${ACTION_SCHEDULE_DATE}_${ctx.wizard.state.refugeUrlShort}_YES` },
+            { text: "Non", callback_data: `${ACTION_SCHEDULE_DATE}_${ctx.wizard.state.refugeUrlShort}_NO` }
+          ]
+        ]
+      }
+    });
+
+    // This line is necessary, otherwise the stephandler won't be called
+    return ctx.wizard.next();
+  },
+  stepHandler,
+  async (ctx) => {
+    await ctx.reply("Done from scene: " + MORE_REFUGES_SCENE)
+    return await ctx.scene.leave()
+  }
+)
+
+const triggerDateSchedulingWizard = new WizardScene(
+  TRIGGER_DATE_SCHEDULING_SCENE,
+  async (ctx) => {
+    console.log("Arrived at TRIGGER_DATE_SCHEDULING_SCENE")
+    // Wait for user's input
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    console.log(`Current text is: ${ctx.message.text}`)
+    // Extract days to track from user's message
+    var datesToTrack = ctx.message.text.split(",").map(date => {
+      var dateFormat = date.match(/(\d\d)\.(\d\d)/)
+      return { day: dateFormat[1], month: dateFormat[2] }
+    })
+
+    // Write datesToTrack in JSON? Add it to the already existing JSON file?
+    var previousDatesToTrack;
+    if (!existsSync(DATA_DIR_PATH)) {
+        mkdirSync(DATA_DIR_PATH);
+        previousDatesToTrack = {};
+    } else 
+        previousDatesToTrack = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
+
+    var urlShort = ctx.wizard.state.refugeUrlShort;
+    if(previousDatesToTrack[urlShort] === undefined)
+      previousDatesToTrack[urlShort] = {}
+    previousDatesToTrack[urlShort].wantedDates = datesToTrack;
+
+    // Write updated previousDatesToTrack into JSON file
+    writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(previousDatesToTrack))
+
+    // TODO: MAKE NEW ctx.wizard.next() AND ASK FOR RESERVATION DETAILS, STORE RESERVATION DETAILS IN A SEPARATE JSON FILE
+
+    await ctx.reply("Ok, je fais attention à ces jours! :)");
+    await delay(1000);
+    return ctx.scene.enter(MORE_REFUGES_SCENE);
+  },
+  stepHandler,
+  async (ctx) => {
+    await ctx.reply("Done from scene: " + MORE_REFUGES_SCENE)
+    return await ctx.scene.leave()
+  }
+)
+
 const moreRefugesWizard = new WizardScene(
-  "MORE_REFUGES_SCENE",
+  MORE_REFUGES_SCENE,
   async (ctx) => {
     console.log("Arrived at new wizard scene, DO YOU WANT MORE REFUGES")
     await ctx.reply("Est\\-ce que tu veux réserver un autre refuge?", {
@@ -156,7 +250,7 @@ const moreRefugesWizard = new WizardScene(
 )
 
 const bot = new Telegraf(token)
-const stage = new Scenes.Stage([listRefugesWizard, moreRefugesWizard])
+const stage = new Scenes.Stage([listRefugesWizard, scheduleDateWizard, triggerDateSchedulingWizard, moreRefugesWizard])
 
 bot.use(session())
 bot.use(stage.middleware())
@@ -191,6 +285,7 @@ expressApp.listen(port, () => {
 
 // Ping heroku app every 20 minutes to prevent it from idling
 var http = require("http");
+const { relative } = require("path");
 setInterval(() => {
   console.log("Pinging Heroku from offlineBot now...")
   http.get(process.env.BOT_DOMAIN)
@@ -207,7 +302,7 @@ watchFile("./data/refuges.json", () => {
   for (const refuge of refuges) {
     var refugeShortUrl = refuge.replace(/^(?:\/\/|[^/]+)*\//, '');
     var refugeName = refugeShortUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
-    if(!!fileData[refugeShortUrl] && fileData[refugeShortUrl].length > 0)
+    if(!!fileData[refugeShortUrl] && !!fileData[refugeShortUrl].availableDates && fileData[refugeShortUrl].availableDates.length > 0)
       bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)
   }
 })
