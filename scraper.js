@@ -3,7 +3,7 @@ const puppeteer = require("puppeteer");
 const cron = require("node-cron");
 const { writeFileSync, readFileSync, existsSync, mkdirSync } = require("fs");
 
-const { BDX_REFUGES_URL, DATA_DIR_PATH, DATA_FILE_NAME } = require("./constants");
+const { BDX_REFUGES_URL, DATA_DIR_PATH, DATA_FILE_NAME, MONTHS_TO_NUMS } = require("./constants");
 
 var browserInstance;
 var browserEndpoint;
@@ -99,9 +99,7 @@ async function getAvailableDates(refugeUrl) {
 
     await page.waitForSelector(".hasDatepicker")
 
-    var daySelector = ".opened[data-handler='selectDay']"
-    // var daySelector = "[data-handler='selectDay']"
-    // var daySelector = ".ui-state-default";
+    var daySelector = ".opened[data-handler='selectDay'] a"
     var nextMonthSelector = "[data-handler='next']"
     var availableDates = [];
     var monthsInAdvance = 5;
@@ -113,10 +111,14 @@ async function getAvailableDates(refugeUrl) {
         } catch (error) {
             return availableDates
         }
+
+        var currentMonth = await page.$(".ui-datepicker-month")
+        currentMonth = await currentMonth.evaluate(el => el.innerText);
+        currentMonth = MONTHS_TO_NUMS[currentMonth];
         
-        var newDates = await page.$$(daySelector)
-        // Convert to numbers since JSON can't serialise cyclical references in DOM nodes
-        newDates = [...Array(newDates.length).keys()]
+        var newDates = await page.$$(daySelector);
+        newDates = await Promise.all(newDates.map(dayElem => dayElem.evaluate(el => el.innerText)))
+        newDates = newDates.map(day => ({ day: day, month: currentMonth }))
 
         // Add available dates from this month to the total
         availableDates = availableDates.concat(newDates)
@@ -134,8 +136,99 @@ async function getAvailableDates(refugeUrl) {
     return availableDates;
 }
 
+// TODO: READ RESERVATION DETAILS FROM JSON IN THIS FUNCTION? OR SHOULD THE FUNCTION CALLING makeReservation (would probably be writeAvailabilitiesJson cron job I guess?) READ THE JSON FILE BEFORE HAND
+async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
+    // Connect to browser
+    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
+
+    // Go to URL
+    const page = await browser.newPage();  
+    await page.goto(refugeUrl);
+
+    // Select day
+    var daySelector = `.opened[data-handler='selectDay'][data-date='${wantedDate}']`;
+    await page.waitForSelector(daySelector);
+    var dayElement = await page.$(daySelector)
+    await page.evaluate(e => e.click(), dayElement);
+
+    // Click page suivante
+    await page.waitForSelector("#edit-wizard-next");
+    await page.click("#edit-wizard-next");
+
+    // Select number of guests
+    await page.waitForSelector("#edit-nombre-d-accompagnants");
+    await page.select("#edit-nombre-d-accompagnants", reservationDetails.numGuests);
+    await page.waitForTimeout(1000)
+
+    // Select gender
+    var gender = reservationDetails.gender
+    await page.waitForSelector("#edit-civilite-mme");
+    await page.click("#edit-civilite-mme");
+
+    // Input last name
+    await page.waitForSelector("#edit-nom");
+    await page.type("#edit-nom", reservationDetails.lastName, { delay: 30 });
+
+    // Input first name
+    await page.waitForSelector("#edit-prenom");
+    await page.type("#edit-prenom", reservationDetails.firstName, { delay: 30 });
+
+    // Input phone number
+    await page.waitForSelector("#edit-telephone");
+    await page.type("#edit-telephone", reservationDetails.phone, { delay: 30 });
+
+    // Input email
+    await page.waitForSelector("#edit-email");
+    await page.type("#edit-email", reservationDetails.email, { delay: 30 });
+
+    // Input postal code
+    await page.waitForSelector("#edit-code-postal");
+    await page.type("#edit-code-postal", reservationDetails.postalCode, { delay: 30 });
+
+    // Input date of birth
+    await page.waitForSelector("#edit-date-de-naissance");
+    await page.type("#edit-date-de-naissance", reservationDetails.birthday.day, { delay: 30 });
+    await page.focus("#edit-date-de-naissance", { delay: 300 });
+    await page.type("#edit-date-de-naissance", reservationDetails.birthday.month, { delay: 30 });
+    await page.focus("#edit-date-de-naissance", { delay: 300 });
+    await page.type("#edit-date-de-naissance", reservationDetails.birthday.year, { delay: 30 });
+
+    // Accept general terms and conditions
+    await page.waitForSelector("#edit-cgu");
+    await page.click("#edit-cgu");
+
+    // Accept GDPR conditions
+    await page.waitForSelector("#edit-rgpd-consentement");
+    await page.click("#edit-rgpd-consentement");
+
+    // Submit form
+    await page.waitForSelector("#edit-submit");
+    await page.click("#edit-submit");
+
+    // Wait for new page to load
+    await page.waitForSelector("#demande-caution-cheque-form");
+
+    // Save URL to send it to bot
+    // TODO: ALTERNATIVELY, WE COULD DIRECTLY CLICK ON "CHEQUE" AND SECURE THE RESERVATION INSTANTLY
+    var url = await page.url();
+
+    // Close tab to avoid memory leaks
+    await page.close();
+    browser.disconnect();
+
+    return url;
+}
+
 function capitalise(string) {
     return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+function arrayIsEqual(array1, array2) {
+    if (array1 === array2) return true;
+    if (array1 == null || array2 == null) return false;
+    if(array1.length !== array2.length) return false
+
+    return array1.every((element, index) => array2.includes(element));
 }
 
 function getRefuges(page, selector) {
@@ -154,6 +247,15 @@ function getRefuges(page, selector) {
 };
 
 async function writeAvailabilitiesToJson() {
+    // Read previous availabilities (if available)
+    var previousAvailabilities;
+    if (!existsSync(DATA_DIR_PATH)) {
+        mkdirSync(DATA_DIR_PATH);
+        previousAvailabilities = {};
+    } else {
+        previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
+    }
+
     // Refuge data that will be saved in JSON
     var refugeAvailabilities = {};
 
@@ -164,28 +266,34 @@ async function writeAvailabilitiesToJson() {
     var allRefuges = await findRefuges();
 
     // Get availabilities for each refuges
-    var availableDates = await Promise.all(allRefuges.map(refuge => getAvailableDates(refuge.url)));
-    for (let index = 0; index < allRefuges.length; index++) {
-        var refuge = allRefuges[index];
-        var dates = availableDates[index];
-        refugeAvailabilities[refuge.urlShort] = dates;
+    for (const refuge of allRefuges) {
+        var availiableDates = await getAvailableDates(refuge.url);
+        refugeAvailabilities[refuge.urlShort] = availiableDates;
     }
+
+    // TODO: IF (in JSON) availableDates === wantedDates call makeReservation
 
     // Close browser
     await closeBrowser();
 
-    // Read previous availabilities (if available)
-    var previousAvailabilities;
-    if (!existsSync(DATA_DIR_PATH)) {
-        mkdirSync(DATA_DIR_PATH);
-        previousAvailabilities = {};
-    } else 
-        previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
-        
-
+    // Map-loop over previousAvailablities, extract availablesDates from each JSON entry and convert hasNewChanges to true as soon as a new value is found
+    var hasNewChanges = false;
+    for (const refuge in refugeAvailabilities) {
+        if(previousAvailabilities[refuge] === undefined)
+            previousAvailabilities[refuge] = {};
+            
+        if(!arrayIsEqual(refugeAvailabilities[refuge], previousAvailabilities[refuge].availableDates)) {
+            console.log("Equal for " + refuge + ": refugeAvailablities has " + refugeAvailabilities[refuge] + " and prevAvailabilities has: " + previousAvailabilities[refuge].availableDates)
+            previousAvailabilities[refuge].availableDates = refugeAvailabilities[refuge]
+            hasNewChanges = true;
+        }
+    }
+    
+    
     // Write refuge availabilities to JSON file (if there are any new changes)
-    if(JSON.stringify(refugeAvailabilities) !== JSON.stringify(previousAvailabilities))
-        writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(refugeAvailabilities));
+    // hasNewChanges = JSON.stringify(refugeAvailabilities) !== JSON.stringify(previousAvailabilities);
+    if(hasNewChanges)
+        writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(previousAvailabilities));
 }
 
 // Ping heroku app every 20 minutes to prevent it from idling
@@ -205,5 +313,6 @@ module.exports = {
     getAvailableDates,
     capitalise,
     initialiseBrowser,
-    writeAvailabilitiesToJson
+    writeAvailabilitiesToJson,
+    makeReservation
 }
