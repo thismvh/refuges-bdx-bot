@@ -248,10 +248,12 @@ async function writeAvailabilitiesToJson() {
     // Read previous availabilities (if available)
     var previousAvailabilities;
     if (!existsSync(DATA_DIR_PATH)) {
+        console.log("writeAvailabilitiesToJson: folder does not exist!")
         mkdirSync(DATA_DIR_PATH);
         writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify({}))
         previousAvailabilities = {};
     } else {
+        console.log("writeAvailabilitiesToJson: folder exists!")
         previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
     }
 

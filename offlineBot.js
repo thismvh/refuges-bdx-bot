@@ -296,11 +296,7 @@ watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
 
   if (!existsSync(DATA_DIR_PATH)) {
     console.log("folder does not exist!")
-    mkdirSync(DATA_DIR_PATH);
-    previousAvailabilities = {};
-  } else {
-    console.log("folder exists!")
-      previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
+    return
   }
 
   if(chatId === null)
