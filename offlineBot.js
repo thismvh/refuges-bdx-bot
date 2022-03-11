@@ -53,13 +53,13 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   await delay(1500);
 
   // Only proceed if data file actually exists
-  if(!existsSync("./data/refuges.json")) {
+  if(!existsSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`)) {
     await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
     await delay(1000);
     return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
   }
 
-  var refugeAvailabilities = JSON.parse(readFileSync("./data/refuges.json"));
+  var refugeAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
   var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl].availableDates;
 
   if(availabilityCurrentRefuge.length == 0) {
@@ -291,12 +291,13 @@ setInterval(() => {
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
 
-watchFile("./data/refuges.json", () => {
+watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
   console.log("Current chatId is: " + chatId)
+  console.log(`trackedRefuges has this many elements: ${trackedRefuges.size}`)
   if(chatId === null)
     return
 
-  var fileData = JSON.parse(readFileSync("./data/refuges.json"));
+  var fileData = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
 
   var refuges = Array.from(trackedRefuges);
   for (const refuge of refuges) {
