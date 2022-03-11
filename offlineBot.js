@@ -285,7 +285,6 @@ expressApp.listen(port, () => {
 
 // Ping heroku app every 20 minutes to prevent it from idling
 var http = require("http");
-const { relative } = require("path");
 setInterval(() => {
   console.log("Pinging Heroku from offlineBot now...")
   http.get(process.env.BOT_DOMAIN)
@@ -294,6 +293,16 @@ setInterval(() => {
 watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
   console.log("Current chatId is: " + chatId)
   console.log(`trackedRefuges has this many elements: ${trackedRefuges.size}`)
+
+  if (!existsSync(DATA_DIR_PATH)) {
+    console.log("folder does not exist!")
+    mkdirSync(DATA_DIR_PATH);
+    previousAvailabilities = {};
+  } else {
+    console.log("folder exists!")
+      previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
+  }
+
   if(chatId === null)
     return
 
