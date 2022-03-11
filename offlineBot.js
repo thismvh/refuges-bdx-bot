@@ -308,9 +308,11 @@ watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
 
   var fileData = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
 
-  var refuges = Array.from(trackedRefuges);
+  // var refuges = Array.from(trackedRefuges);
+  var refuges = Object.keys(fileData);
   for (const refuge of refuges) {
-    var refugeShortUrl = refuge.replace(/^(?:\/\/|[^/]+)*\//, '');
+    // var refugeShortUrl = refuge.replace(/^(?:\/\/|[^/]+)*\//, '');
+    var refugeShortUrl = refuge;
     var refugeName = refugeShortUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(!!fileData[refugeShortUrl] && !!fileData[refugeShortUrl].availableDates && fileData[refugeShortUrl].availableDates.length > 0)
       bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)

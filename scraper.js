@@ -246,9 +246,6 @@ function getRefuges(page, selector) {
 
 async function writeAvailabilitiesToJson() {
     // Read previous availabilities (if available)
-    writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify({}))
-    return
-
     var previousAvailabilities;
     if (!existsSync(DATA_DIR_PATH)) {
         mkdirSync(DATA_DIR_PATH);
