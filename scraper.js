@@ -246,9 +246,13 @@ function getRefuges(page, selector) {
 
 async function writeAvailabilitiesToJson() {
     // Read previous availabilities (if available)
+    writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify({}))
+    return
+
     var previousAvailabilities;
     if (!existsSync(DATA_DIR_PATH)) {
         mkdirSync(DATA_DIR_PATH);
+        writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify({}))
         previousAvailabilities = {};
     } else {
         previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
@@ -281,7 +285,7 @@ async function writeAvailabilitiesToJson() {
             previousAvailabilities[refuge] = {};
             
         if(!arrayIsEqual(refugeAvailabilities[refuge], previousAvailabilities[refuge].availableDates)) {
-            console.log("Equal for " + refuge + ": refugeAvailablities has " + refugeAvailabilities[refuge] + " and prevAvailabilities has: " + previousAvailabilities[refuge].availableDates)
+            console.log("Unequal for " + refuge + ": refugeAvailablities has " + refugeAvailabilities[refuge] + " and prevAvailabilities has: " + previousAvailabilities[refuge].availableDates)
             previousAvailabilities[refuge].availableDates = refugeAvailabilities[refuge]
             hasNewChanges = true;
         }
