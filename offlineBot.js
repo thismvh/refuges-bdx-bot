@@ -23,9 +23,9 @@ const {
   DATA_FILE_NAME
 } = require("./constants");
 
-const token = process.env.BOT_TOKEN_OFF
+const token = process.env.BOT_TOKEN
 if (token === undefined) {
-  throw new Error("BOT_TOKEN_OFF must be provided!")
+  throw new Error("BOT_TOKEN must be provided!")
 }
 
 var chatId = null;
