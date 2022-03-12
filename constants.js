@@ -50,6 +50,8 @@ const MONTHS_TO_NUMS = {
     "Décembre":     "12"
 };
 
+const MONGO_DB_URI = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@refuges-bdx-bot.cnu1y.mongodb.net/refuges-bdx-bot?retryWrites=true&w=majority`
+
 module.exports = {
     BDX_REFUGES_URL,
     LIST_REFUGES_SCENE,
@@ -73,5 +75,6 @@ module.exports = {
     ACTION_SCHEDULE_DATE,
     DATA_DIR_PATH,
     DATA_FILE_NAME,
-    MONTHS_TO_NUMS
+    MONTHS_TO_NUMS,
+    MONGO_DB_URI
 }

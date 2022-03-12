@@ -1,6 +1,9 @@
+const http = require("http");
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
 const { readFileSync, watchFile, existsSync, mkdirSync, writeFileSync } = require("fs");
+const mongoose = require("mongoose");
+const Refuge = require("./models/refuge");
 
 const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
 const { 
@@ -20,7 +23,8 @@ const {
   WHICH_REFUGE_MESSAGE,
   GOING_TO_SLEEP,
   DATA_DIR_PATH,
-  DATA_FILE_NAME
+  DATA_FILE_NAME,
+  MONGO_DB_URI
 } = require("./constants");
 
 const token = process.env.BOT_TOKEN
@@ -210,6 +214,16 @@ const triggerDateSchedulingWizard = new WizardScene(
     // Write updated previousDatesToTrack into JSON file
     writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(previousDatesToTrack))
 
+    // Instead of writing the whole object, we need to only update the wantedDates property of this refuge (bzw. create the refuge if it does not exist yet)
+    var newRefuge = {
+      name: urlShort,
+      url: `${BDX_REFUGES_URL}/${urlShort}`,
+      availableDates: ["00.0000"],
+      wantedDates: ctx.message.text.split(",")
+    }
+    saveToDb(newRefuge)
+
+
     // TODO: MAKE NEW ctx.wizard.next() AND ASK FOR RESERVATION DETAILS, STORE RESERVATION DETAILS IN A SEPARATE JSON FILE
 
     await ctx.reply("Ok, je fais attention à ces jours! :)");
@@ -273,18 +287,68 @@ process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
 // Create express server just so that Heroku recognizes this script as a web process
 const express = require("express");
-const expressApp = express();
+const app = express();
+
+app.use(express.json())
 
 const port = process.env.PORT || 3000
-expressApp.get("/", (req, res) => {
+mongoose.connect(MONGO_DB_URI)
+  .then(() => app.listen(port, () => console.log(`Listening on port ${port}`)))
+  .catch((err) => console.log(err))
+
+app.get("/", (req, res) => {
   res.send("Hello World!")
 })
-expressApp.listen(port, () => {
-  console.log(`Listening on port ${port}`)
+
+app.post("/refuges", (req, res) => {
+  console.log(req.body)
+  const refuge = new Refuge(req.body)
+
+  refuge.save()
+    .then((newRefuge) => res.send(newRefuge))
+    .catch((err) => console.log(err))
 })
 
+app.get("/all-refuges", (req, res) => {
+  Refuge.find()
+    .then((allRefuges) => res.send(allRefuges))
+    .catch((err) => console.log(err))
+})
+
+// Send POST request for refuge to be saved in database
+// TODO: instead of saving the whole thing, look into updating each record (i.e. ONLY update availableDates OR wantedDates,
+// depending on which script we're in. bot changes wantedDates, scrapter changes availableDates)
+function saveToDb(data) {
+  var postData = JSON.stringify(data);
+
+  var options = {
+      hostname: "localhost",
+      port: port,
+      path: '/refuges',
+      method: 'POST',
+      headers: { 'Content-Type': "application/json" },
+      json: true,
+      body: postData
+  };
+
+  var req = http.request(options, (res) => {
+      var body = "";
+      console.log('statusCode:', res.statusCode);
+      console.log('headers:', res.headers);
+
+      res.on('data', (chunk) => { body += chunk });
+      res.on("end", () => console.log("body is: " + body))
+  });
+
+  req.on('error', (e) => {
+      console.error(e);
+  });
+
+  req.write(postData);
+  req.end();
+}
+
 // Ping heroku app every 20 minutes to prevent it from idling
-var http = require("http");
 setInterval(() => {
   console.log("Pinging Heroku from offlineBot now...")
   http.get(process.env.BOT_DOMAIN)
