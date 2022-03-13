@@ -16,6 +16,10 @@ const WINK = "\u{1F609}"
 const PARTYING_FACE = "\u{1F973}"
 const SLEEPING_FACE = "\u{1F634}"
 const WAVING_HAND = "\u{1F44B}"
+const NEW_MOON_FACE = "\u{1F31A}"
+const EXPLODING_HEAD = "\u{1F92F}"
+const CONFUSED_FACE = "\u{1F615}"
+const WARNING = "\u{26A0}"
 
 // Pre-defined bot messages
 const WELCOME_MESSAGE = `Coucou, j'ai entendu tu veux réserver un refuge? ${GRIN}`;
@@ -36,18 +40,18 @@ const DATA_FILE_NAME = "refuges.json"
 
 // MONTH MAPPINGS
 const MONTHS_TO_NUMS = {
-    "Janvier":      "1",
-    "Février":      "2",
-    "Mars":         "3",
-    "Avril":        "4",
-    "Mai":          "5",
-    "Juin":         "6",
-    "Juillet":      "7",
-    "Août":         "8",
-    "Septembre":    "9",
-    "Octobre":      "10",
-    "Novembre":     "11",
-    "Décembre":     "12"
+    "janvier":      "1",
+    "février":      "2",
+    "mars":         "3",
+    "avril":        "4",
+    "mai":          "5",
+    "juin":         "6",
+    "juillet":      "7",
+    "août":         "8",
+    "septembre":    "9",
+    "octobre":      "10",
+    "novembre":     "11",
+    "décembre":     "12"
 };
 
 const MONGO_DB_URI = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@refuges-bdx-bot.cnu1y.mongodb.net/refuges-bdx-bot?retryWrites=true&w=majority`
@@ -65,6 +69,10 @@ module.exports = {
     PARTYING_FACE,
     SLEEPING_FACE,
     WAVING_HAND,
+    NEW_MOON_FACE,
+    EXPLODING_HEAD,
+    CONFUSED_FACE,
+    WARNING,
     WELCOME_MESSAGE,
     CHIANT_CHECK_REFUGES,
     TINQUIETE_JY_VAIS,
