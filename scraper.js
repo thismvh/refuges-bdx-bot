@@ -1,9 +1,12 @@
 require('dotenv').config();
 const puppeteer = require("puppeteer");
 const cron = require("node-cron");
-const { writeFileSync, readFileSync, existsSync, mkdirSync } = require("fs");
+const { updateRefuge } = require('./requests');
+const { capitalise, splitDateString } = require("./helpers")
 
 const { BDX_REFUGES_URL, DATA_DIR_PATH, DATA_FILE_NAME, MONTHS_TO_NUMS } = require("./constants");
+
+const port = process.env.PORT || 3000
 
 var browserInstance;
 var browserEndpoint;
@@ -143,9 +146,32 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     const page = await browser.newPage();  
     await page.goto(refugeUrl);
 
+    var nextMonthSelector = "[data-handler='next']"
+    var currentMonth;
+    var isCorrectMonth = false
+    wantedDate = splitDateString(wantedDate);
+    while(!isCorrectMonth) {
+        // Update current month
+        currentMonth = await page.$(".ui-datepicker-month")
+        currentMonth = await currentMonth.evaluate(el => el.innerText.toLowerCase());
+        currentMonth = MONTHS_TO_NUMS[currentMonth];
+
+        // Go to next month
+        await page.waitForSelector(nextMonthSelector)
+        var nextMonthButton = await page.$(nextMonthSelector)
+        await page.evaluate(e => e.click(), nextMonthButton);
+
+        if(currentMonth === wantedDate.month) isCorrectMonth = true
+    }
+
     // Select day
-    var daySelector = `.opened[data-handler='selectDay'][data-date='${wantedDate}']`;
-    await page.waitForSelector(daySelector);
+    var daySelector = `.opened[data-handler='selectDay'][data-date='${wantedDate.day}']`;
+    try {
+        await page.waitForSelector(daySelector, { timeout: 1000 })
+    } catch (err){
+        console.log("There was an error!!")
+        return null
+    }
     var dayElement = await page.$(daySelector)
     await page.evaluate(e => e.click(), dayElement);
 
@@ -217,18 +243,6 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     return url;
 }
 
-function capitalise(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1)
-}
-
-function arrayIsEqual(array1, array2) {
-    if (array1 === array2) return true;
-    if (array1 == null || array2 == null) return false;
-    if(array1.length !== array2.length) return false
-
-    return array1.every((element, index) => array2.includes(element));
-}
-
 function getRefuges(page, selector) {
     return page.evaluate((sel) => {
         let elements = Array.from(document.querySelectorAll(sel));
@@ -244,57 +258,50 @@ function getRefuges(page, selector) {
     }, selector);
 };
 
-async function writeAvailabilitiesToJson() {
+async function updateAvailabilities() {
     // Read previous availabilities (if available)
-    var previousAvailabilities;
-    if (!existsSync(DATA_DIR_PATH)) {
-        console.log("writeAvailabilitiesToJson: folder does not exist!")
-        mkdirSync(DATA_DIR_PATH);
-        writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify({}))
-        previousAvailabilities = {};
-    } else {
-        console.log("writeAvailabilitiesToJson: folder exists!")
-        previousAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
-    }
+    // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
+    var options = {
+        hostname: "localhost",
+        port: port,
+        path: `/all-refuges`,
+    };
+    var allRefuges = await new Promise((resolve, reject) => {
+        http.get(options, (res) => {
+            var body = ""
+            res.on("data", (chunk) => body += chunk );
+            res.on("end", () => resolve(JSON.parse(body)));
+        });
+    })
 
-    // Refuge data that will be saved in JSON
-    var refugeAvailabilities = {};
+    if(allRefuges.length == 0) return
 
     // Initialise browser
     await initialiseBrowser(); 
 
-    // Get all refuges
-    var allRefuges = await findRefuges();
-
     // Get availabilities for each refuges
     for (const refuge of allRefuges) {
-        var availiableDates = await getAvailableDates(refuge.url);
-        refugeAvailabilities[refuge.urlShort] = availiableDates;
-    }
+        var update = {};
+        var availableDates = await getAvailableDates(refuge.url);
+        update.availableDates = availableDates;
 
-    // TODO: IF (in JSON) availableDates === wantedDates call makeReservation
+        // If any of the user's wantedDates is available, go ahead and make the reservation
+        var compatibleDates = refuge.wantedDates.filter(value => availableDates.includes(value));
+        for (const date of compatibleDates) {
+            // makeReservation returns a URL as a confirmation link
+            var urlToChequeVsCarte = await makeReservation(refuge.url, date, refuge.reservation)
+            // Update the reservationUrls if a successful reservation could be made
+            if(urlToChequeVsCarte != null) {
+                if(update.reservationUrls === undefined)
+                    update.reservationUrls = []
+                update.reservationUrls.push(urlToChequeVsCarte)
+            }
+        }
+        await updateRefuge(update, refuge.name)
+    }
 
     // Close browser
     await closeBrowser();
-
-    // Map-loop over previousAvailablities, extract availablesDates from each JSON entry and convert hasNewChanges to true as soon as a new value is found
-    var hasNewChanges = false;
-    for (const refuge in refugeAvailabilities) {
-        if(previousAvailabilities[refuge] === undefined)
-            previousAvailabilities[refuge] = {};
-            
-        if(!arrayIsEqual(refugeAvailabilities[refuge], previousAvailabilities[refuge].availableDates)) {
-            console.log("Unequal for " + refuge + ": refugeAvailablities has " + refugeAvailabilities[refuge] + " and prevAvailabilities has: " + previousAvailabilities[refuge].availableDates)
-            previousAvailabilities[refuge].availableDates = refugeAvailabilities[refuge]
-            hasNewChanges = true;
-        }
-    }
-    
-    
-    // Write refuge availabilities to JSON file (if there are any new changes)
-    // hasNewChanges = JSON.stringify(refugeAvailabilities) !== JSON.stringify(previousAvailabilities);
-    if(hasNewChanges)
-        writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(previousAvailabilities));
 }
 
 // Ping heroku app every 20 minutes to prevent it from idling
@@ -304,16 +311,18 @@ setInterval(() => {
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
 
-cron.schedule("* * * * *", () => {
-    console.log("Writing availabilities to JSON now...");
-    writeAvailabilitiesToJson();
-})
+// cron.schedule("* * * * *", () => {
+//     console.log("Writing availabilities to JSON now...");
+//     updateAvailabilities();
+// })
+
+updateAvailabilities()
 
 module.exports = {
     findRefuges,
     getAvailableDates,
     capitalise,
     initialiseBrowser,
-    writeAvailabilitiesToJson,
+    updateAvailabilities,
     makeReservation
 }

@@ -2,10 +2,9 @@ const http = require("http");
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
 const { readFileSync, watchFile, existsSync, mkdirSync, writeFileSync } = require("fs");
-const mongoose = require("mongoose");
-const Refuge = require("./models/refuge");
 
 const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
+const { delay } = require("./helpers")
 const { 
   ACTION_FETCH_AVAILABLE_DATES,
   ACTION_MORE_REFUGES,
@@ -24,8 +23,15 @@ const {
   GOING_TO_SLEEP,
   DATA_DIR_PATH,
   DATA_FILE_NAME,
-  MONGO_DB_URI
+  NEW_MOON_FACE,
+  GRIN,
+  EXPLODING_HEAD,
+  CONFUSED_FACE,
+  WARNING,
+  WINK
 } = require("./constants");
+
+const { saveRefuge, updateRefuge } = require("./requests");
 
 const token = process.env.BOT_TOKEN
 if (token === undefined) {
@@ -51,22 +57,30 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
 
   // Save refuge as already seen
   trackedRefuges.add(fullUrl);
+  // Add this refuge to database if in case it didn't yet exist
+  // TODO: probably this should return the updated refuge to avoid fetching the refuge again 
+  await updateRefuge({ name: relativeUrl, url: fullUrl }, relativeUrl)
 
   // Little feedback to user to keep attention
   await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`);
   await delay(1500);
+  
+  // Fetch refuge from database
+  // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
+  var options = {
+    hostname: "localhost",
+    port: process.env.PORT || 3000,
+    path: `/refuges/${relativeUrl}`,
+  };
+  var fetchedRefuge = await new Promise((resolve, reject) => {
+      http.get(options, (res) => {
+          var body = ""
+          res.on("data", (chunk) => body += chunk );
+          res.on("end", () => resolve(JSON.parse(body)));
+      });
+  })
 
-  // Only proceed if data file actually exists
-  if(!existsSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`)) {
-    await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART} Mais t'inquièèèèète, je t'envoie un message quand y en a!`);
-    await delay(1000);
-    return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
-  }
-
-  var refugeAvailabilities = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
-  var availabilityCurrentRefuge = refugeAvailabilities[relativeUrl].availableDates;
-
-  if(availabilityCurrentRefuge.length == 0) {
+  if(fetchedRefuge.availableDates.length == 0) {
     await ctx.reply(`Mince!!! Il y a pas de places libres pour ${refugeName} ${BROKEN_HEART}`);
     await delay(1000);
     return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
@@ -98,7 +112,7 @@ stepHandler.action(new RegExp(ACTION_SCHEDULE_DATE + "_+", "g"), async (ctx) => 
   console.log("scheduleDateAnswer is looking like this: " + scheduleDateAnswer)
 
   if(wantsDateSchedule) {
-    await ctx.reply("Ok, quels jours est\-ce que tu veux réserver? Par exemple, si c'est le 3 juin et le 19 juillet, écri-les comme ça: 03.06, 19.07");
+    await ctx.reply("Ok, quels jours est\-ce que tu veux réserver? Par exemple, si c'est le 3 juin et le 19 juillet, écri-les comme ça: 3.6, 19.7");
     return ctx.scene.enter(TRIGGER_DATE_SCHEDULING_SCENE, { refugeUrlShort: relativeUrl });
   }
   else {
@@ -192,42 +206,77 @@ const triggerDateSchedulingWizard = new WizardScene(
   },
   async (ctx) => {
     console.log(`Current text is: ${ctx.message.text}`)
-    // Extract days to track from user's message
-    var datesToTrack = ctx.message.text.split(",").map(date => {
-      var dateFormat = date.match(/(\d\d)\.(\d\d)/)
-      return { day: dateFormat[1], month: dateFormat[2] }
-    })
-
-    // Write datesToTrack in JSON? Add it to the already existing JSON file?
-    var previousDatesToTrack;
-    if (!existsSync(DATA_DIR_PATH)) {
-        mkdirSync(DATA_DIR_PATH);
-        previousDatesToTrack = {};
-    } else 
-        previousDatesToTrack = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
-
-    var urlShort = ctx.wizard.state.refugeUrlShort;
-    if(previousDatesToTrack[urlShort] === undefined)
-      previousDatesToTrack[urlShort] = {}
-    previousDatesToTrack[urlShort].wantedDates = datesToTrack;
-
-    // Write updated previousDatesToTrack into JSON file
-    writeFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, JSON.stringify(previousDatesToTrack))
-
     // Instead of writing the whole object, we need to only update the wantedDates property of this refuge (bzw. create the refuge if it does not exist yet)
-    var newRefuge = {
-      name: urlShort,
-      url: `${BDX_REFUGES_URL}/${urlShort}`,
-      availableDates: ["00.0000"],
-      wantedDates: ctx.message.text.split(",")
-    }
-    saveToDb(newRefuge)
+    var newDates = { wantedDates: ctx.message.text.split(",") }
+    await updateRefuge(newDates, ctx.wizard.state.refugeUrlShort)
 
 
     // TODO: MAKE NEW ctx.wizard.next() AND ASK FOR RESERVATION DETAILS, STORE RESERVATION DETAILS IN A SEPARATE JSON FILE
 
     await ctx.reply("Ok, je fais attention à ces jours! :)");
     await delay(1000);
+    await ctx.reply(`Pour faire la réservation, j'aurais besoin de quelques dates ${NEW_MOON_FACE}`);
+    await delay(500)
+    await ctx.reply("Quel est ton prénom?");
+    ctx.wizard.state.reservationDetails = {}
+    return ctx.wizard.next();
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.firstName = ctx.message.text;
+    await ctx.reply("Trop beau prénom!");
+    await delay(500)
+    await ctx.reply("Et ton nom?")
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.lastName = ctx.message.text;
+    await ctx.reply("Tant beau comme le prénom, quelle chance!");
+    await delay(500)
+    await ctx.reply("Et c'est quoi ton email?")
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.email = ctx.message.text;
+    await ctx.reply("Bonne election d'email!");
+    await delay(500)
+    await ctx.reply("Et ton téléphone?")
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.phone = ctx.message.text;
+    await ctx.reply(`J'ai vu des numéros plus beaux, mais oook, je le prends ${NEW_MOON_FACE}`);
+    await delay(500)
+    await ctx.reply(`Du coup, c'est quoi ta date de naissance? La mienne c'est le 08.06.1998, écri la tienne comme moi ${GRIN}`)
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.birthday = ctx.message.text;
+    await ctx.reply(`Wow, mon frère aussi, quelle coïncidence! ${EXPLODING_HEAD}`);
+    await delay(500)
+    await ctx.reply(`Maintenant je suis désolé, mais pour la réservation, j'ai besoin de savoir ta civilité (M. ou Mme) ${CONFUSED_FACE}`)
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.gender = ctx.message.text;
+    await ctx.reply(`Ok, cool! Il me reste juste 2 choses pour finir...`);
+    await delay(500)
+    await ctx.reply(`D'abord, ton code postal:`)
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.postalCode = ctx.message.text;
+    await ctx.reply(`Meeeeerci beacoup! ${GRIN}`);
+    await delay(500)
+    await ctx.reply(`Et finalement, le nombre d'accompagnants qui veulent venir à ${ctx.wizard.state.refugeUrlShort} avec toi:`)
+    return ctx.wizard.next()
+  },
+  async (ctx) => {
+    ctx.wizard.state.reservationDetails.numGuests = ctx.message.text;
+    const demoLink = "https://lesrefuges.bordeaux-metropole.fr/reservation/demande/caution/redirection/SxVz1dmPto79DNzmYCL5mOBUglCM1ZPxzJZ8Mh94I6M"
+    await ctx.reply(`Trop cool! C'est toooout ${GRIN}. Quand il y a des places libres pour les jours que tu m'as dit je ferai la réservation et tu recevra un link comme ça ${demoLink} \n\n Il te faudra seulement clicker sur le link et décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE} \n\n Mais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Il faut être vite ${WINK}`);
+    const newReservation = { reservation: ctx.wizard.state.reservationDetails };
+    await updateRefuge(newReservation, ctx.wizard.state.refugeUrlShort)
+    await delay(500)
     return ctx.scene.enter(MORE_REFUGES_SCENE);
   },
   stepHandler,
@@ -285,69 +334,6 @@ bot.start((ctx) => {
 process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
-// Create express server just so that Heroku recognizes this script as a web process
-const express = require("express");
-const app = express();
-
-app.use(express.json())
-
-const port = process.env.PORT || 3000
-mongoose.connect(MONGO_DB_URI)
-  .then(() => app.listen(port, () => console.log(`Listening on port ${port}`)))
-  .catch((err) => console.log(err))
-
-app.get("/", (req, res) => {
-  res.send("Hello World!")
-})
-
-app.post("/refuges", (req, res) => {
-  console.log(req.body)
-  const refuge = new Refuge(req.body)
-
-  refuge.save()
-    .then((newRefuge) => res.send(newRefuge))
-    .catch((err) => console.log(err))
-})
-
-app.get("/all-refuges", (req, res) => {
-  Refuge.find()
-    .then((allRefuges) => res.send(allRefuges))
-    .catch((err) => console.log(err))
-})
-
-// Send POST request for refuge to be saved in database
-// TODO: instead of saving the whole thing, look into updating each record (i.e. ONLY update availableDates OR wantedDates,
-// depending on which script we're in. bot changes wantedDates, scrapter changes availableDates)
-function saveToDb(data) {
-  var postData = JSON.stringify(data);
-
-  var options = {
-      hostname: "localhost",
-      port: port,
-      path: '/refuges',
-      method: 'POST',
-      headers: { 'Content-Type': "application/json" },
-      json: true,
-      body: postData
-  };
-
-  var req = http.request(options, (res) => {
-      var body = "";
-      console.log('statusCode:', res.statusCode);
-      console.log('headers:', res.headers);
-
-      res.on('data', (chunk) => { body += chunk });
-      res.on("end", () => console.log("body is: " + body))
-  });
-
-  req.on('error', (e) => {
-      console.error(e);
-  });
-
-  req.write(postData);
-  req.end();
-}
-
 // Ping heroku app every 20 minutes to prevent it from idling
 setInterval(() => {
   console.log("Pinging Heroku from offlineBot now...")
@@ -378,7 +364,3 @@ watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
       bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)
   }
 })
-
-async function delay(time) {
-  await new Promise(resolve => setTimeout(resolve, time));
-}
