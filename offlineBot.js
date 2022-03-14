@@ -28,7 +28,8 @@ const {
   EXPLODING_HEAD,
   CONFUSED_FACE,
   WARNING,
-  WINK
+  WINK,
+  PORT
 } = require("./constants");
 
 const { saveRefuge, updateRefuge } = require("./requests");
@@ -68,8 +69,8 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   // Fetch refuge from database
   // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
   var options = {
-    hostname: "localhost",
-    port: process.env.PORT || 3000,
+    hostname: process.env.SERVER_URL,
+    port: PORT,
     path: `/refuges/${relativeUrl}`,
   };
   var fetchedRefuge = await new Promise((resolve, reject) => {
@@ -334,6 +335,17 @@ bot.start((ctx) => {
 process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
+// Create express server just so that Heroku recognizes this script as a web process
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Hello World, this is offlineBot!")
+})
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`)
+})
+
 // Ping heroku app every 20 minutes to prevent it from idling
 setInterval(() => {
   console.log("Pinging Heroku from offlineBot now...")
@@ -364,3 +376,5 @@ watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
       bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)
   }
 })
+
+console.log("Executing offlineBot.js...")

@@ -55,6 +55,7 @@ const MONTHS_TO_NUMS = {
 };
 
 const MONGO_DB_URI = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@refuges-bdx-bot.cnu1y.mongodb.net/refuges-bdx-bot?retryWrites=true&w=majority`
+const PORT = process.env.PORT || 3000;
 
 module.exports = {
     BDX_REFUGES_URL,
@@ -84,5 +85,6 @@ module.exports = {
     DATA_DIR_PATH,
     DATA_FILE_NAME,
     MONTHS_TO_NUMS,
-    MONGO_DB_URI
+    MONGO_DB_URI,
+    PORT
 }
