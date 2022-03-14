@@ -141,18 +141,23 @@ async function getAvailableDates(refugeUrl) {
 
 // TODO: READ RESERVATION DETAILS FROM JSON IN THIS FUNCTION? OR SHOULD THE FUNCTION CALLING makeReservation (would probably be writeAvailabilitiesJson cron job I guess?) READ THE JSON FILE BEFORE HAND
 async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
+    console.log("Starting makeReservation process...")
     // Connect to browser
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
+    console.log("Successfully connected to browser!")
 
     // Go to URL
-    const page = await browser.newPage();  
+    const page = await browser.newPage(); 
+    console.log("Successfully opened a new page!") 
     await page.goto(refugeUrl);
+    console.log("Successfully went to URL!")
 
     var nextMonthSelector = "[data-handler='next']"
     var currentMonth;
     var isCorrectMonth = false
     wantedDate = splitDateString(wantedDate);
     while(!isCorrectMonth) {
+        console.log(`currentMonth is: ${currentMonth}`)
         // Update current month
         currentMonth = await page.$(".ui-datepicker-month")
         currentMonth = await currentMonth.evaluate(el => el.innerText.toLowerCase());
@@ -165,21 +170,24 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
 
         if(currentMonth === wantedDate.month) isCorrectMonth = true
     }
+    console.log(`Arrived at correct month, which is: ${currentMonth} and should be ${wantedDate.month}`)
 
     // Select day
     var daySelector = `.opened[data-handler='selectDay'][data-date='${wantedDate.day}']`;
     try {
         await page.waitForSelector(daySelector, { timeout: 1000 })
     } catch (err){
-        console.log("There was an error!!")
+        console.log("makeReservation: no available dates were found!")
         return null
     }
     var dayElement = await page.$(daySelector)
     await page.evaluate(e => e.click(), dayElement);
+    console.log("Successfully clicked available day!")
 
     // Click page suivante
     await page.waitForSelector("#edit-wizard-next");
     await page.click("#edit-wizard-next");
+    console.log("Successfully clicked to start the form!")
 
     // Select number of guests
     await page.waitForSelector("#edit-nombre-d-accompagnants");
@@ -190,26 +198,32 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     var gender = reservationDetails.gender
     await page.waitForSelector("#edit-civilite-mme");
     await page.click("#edit-civilite-mme");
+    console.log("Successfully clicked gender!")
 
     // Input last name
     await page.waitForSelector("#edit-nom");
     await page.type("#edit-nom", reservationDetails.lastName, { delay: 30 });
+    console.log("Successfully typed first name!")
 
     // Input first name
     await page.waitForSelector("#edit-prenom");
     await page.type("#edit-prenom", reservationDetails.firstName, { delay: 30 });
+    console.log("Successfully typed last name!")
 
     // Input phone number
     await page.waitForSelector("#edit-telephone");
     await page.type("#edit-telephone", reservationDetails.phone, { delay: 30 });
+    console.log("Successfully typed phone!")
 
     // Input email
     await page.waitForSelector("#edit-email");
     await page.type("#edit-email", reservationDetails.email, { delay: 30 });
+    console.log("Successfully typed email!")
 
     // Input postal code
     await page.waitForSelector("#edit-code-postal");
     await page.type("#edit-code-postal", reservationDetails.postalCode, { delay: 30 });
+    console.log("Successfully typed postal code!")
 
     // Input date of birth
     await page.waitForSelector("#edit-date-de-naissance");
@@ -218,25 +232,31 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     await page.type("#edit-date-de-naissance", reservationDetails.birthday.month, { delay: 30 });
     await page.focus("#edit-date-de-naissance", { delay: 300 });
     await page.type("#edit-date-de-naissance", reservationDetails.birthday.year, { delay: 30 });
+    console.log("Successfully typed birthday!")
 
     // Accept general terms and conditions
     await page.waitForSelector("#edit-cgu");
     await page.click("#edit-cgu");
+    console.log("Successfully agreed to terms!")
 
     // Accept GDPR conditions
     await page.waitForSelector("#edit-rgpd-consentement");
     await page.click("#edit-rgpd-consentement");
+    console.log("Successfully agreed to GDPR!")
 
     // Submit form
     await page.waitForSelector("#edit-submit");
     await page.click("#edit-submit");
+    console.log("Successfully submitted!")
 
     // Wait for new page to load
     await page.waitForSelector("#demande-caution-cheque-form");
+    console.log("Successfully arrived at new page!")
 
     // Save URL to send it to bot
     // TODO: ALTERNATIVELY, WE COULD DIRECTLY CLICK ON "CHEQUE" AND SECURE THE RESERVATION INSTANTLY
     var url = await page.url();
+    console.log(`url of current page is: ${url}`)
 
     // Close tab to avoid memory leaks
     await page.close();
