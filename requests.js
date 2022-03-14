@@ -23,7 +23,7 @@ var req = http.request(options, (res) => {
     console.log("statusCode:", res.statusCode);
 
     res.on("data", (chunk) => { body += chunk });
-    res.on("end", () => console.log("body is: " + body))
+    res.on("end", () => body)
     });
 
     req.on("error", (e) => {
@@ -50,10 +50,10 @@ async function updateRefuge(data, name) {
 
     var req = http.request(options, (res) => {
         var body = "";
-        console.log("statusCode:", res.statusCode);
+        // console.log("statusCode:", res.statusCode);
 
         res.on("data", (chunk) => { body += chunk });
-        res.on("end", () => console.log("body is: " + body))
+        res.on("end", () => body)
     });
 
     req.on("error", (e) => {
@@ -83,7 +83,7 @@ async function saveReservation(data) {
         console.log("statusCode:", res.statusCode);
 
         res.on("data", (chunk) => { body += chunk });
-        res.on("end", () => console.log("body is: " + body))
+        res.on("end", () => body)
     });
     
     req.on("error", (e) => {
