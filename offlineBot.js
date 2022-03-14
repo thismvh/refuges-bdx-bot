@@ -43,8 +43,6 @@ if (token === undefined) {
 
 var chatId = null;
 
-var trackedRefuges = new Set();
-
 const stepHandler = new Composer()
 stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (ctx) => {
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
@@ -53,13 +51,6 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
   var fullUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
-  if(trackedRefuges.has(fullUrl)) {
-    ctx.reply("Je suis déjà ce refuge, choisi un autre :)");
-    return
-  }
-
-  // Save refuge as already seen
-  trackedRefuges.add(fullUrl);
   // Add this refuge to database if in case it didn't yet exist
   // TODO: probably this should return the updated refuge to avoid fetching the refuge again 
   await updateRefuge({ name: relativeUrl, url: fullUrl }, relativeUrl)
@@ -90,7 +81,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   else {
     await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${fullUrl}`);
     await delay(1000);
-    return ctx.scene.enter(MORE_REFUGES_SCENE);
+    return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
   }
 })
 
