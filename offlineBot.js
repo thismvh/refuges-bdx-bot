@@ -1,4 +1,5 @@
 const http = require("http");
+const cron = require("node-cron");
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
 const { readFileSync, watchFile, existsSync, mkdirSync, writeFileSync } = require("fs");
@@ -29,7 +30,8 @@ const {
   CONFUSED_FACE,
   WARNING,
   WINK,
-  PORT
+  PORT,
+  API_PATH_BASE
 } = require("./constants");
 
 const { saveRefuge, updateRefuge } = require("./requests");
@@ -70,8 +72,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
   var options = {
     hostname: process.env.SERVER_URL,
-    port: PORT,
-    path: `/refuges/${relativeUrl}`,
+    path: `${API_PATH_BASE}/refuges/${relativeUrl}`,
   };
   var fetchedRefuge = await new Promise((resolve, reject) => {
       http.get(options, (res) => {
@@ -352,29 +353,33 @@ setInterval(() => {
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
 
-watchFile(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`, () => {
+async function notifyOfAvailabilities() {
   console.log("Current chatId is: " + chatId)
-  console.log(`trackedRefuges has this many elements: ${trackedRefuges.size}`)
+  if(chatId === null) return
 
-  if (!existsSync(DATA_DIR_PATH)) {
-    console.log("folder does not exist!")
-    return
-  }
+  var options = {
+    hostname: process.env.SERVER_URL,
+    path: `${API_PATH_BASE}/all-refuges`,
+  };
+  var allRefuges = await new Promise((resolve, reject) => {
+      http.get(options, (res) => {
+          var body = ""
+          res.on("data", (chunk) => body += chunk );
+          res.on("end", () => resolve(JSON.parse(body)));
+      });
+  })
 
-  if(chatId === null)
-    return
+  if(allRefuges.length == 0) return
 
-  var fileData = JSON.parse(readFileSync(`${DATA_DIR_PATH}/${DATA_FILE_NAME}`));
-
-  // var refuges = Array.from(trackedRefuges);
-  var refuges = Object.keys(fileData);
-  for (const refuge of refuges) {
-    // var refugeShortUrl = refuge.replace(/^(?:\/\/|[^/]+)*\//, '');
-    var refugeShortUrl = refuge;
-    var refugeName = refugeShortUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
-    if(!!fileData[refugeShortUrl] && !!fileData[refugeShortUrl].availableDates && fileData[refugeShortUrl].availableDates.length > 0)
+  for (const refuge of allRefuges) {
+    var refugeName = refuge.name.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+    if(refuge.availableDates !== undefined && refuge.availableDates.length > 0)
       bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)
   }
-})
+}
 
-console.log("Executing offlineBot.js...")
+// Maybe we could send a GET request from the Netlify server as a sort of "webhook" to avoid constantly polling??
+cron.schedule("30 * * * * *", () => {
+  console.log("Notifying of potential new availabilities now...");
+  notifyOfAvailabilities();
+})

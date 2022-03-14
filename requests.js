@@ -1,5 +1,5 @@
 const http = require("http");
-const { PORT } = require("./constants");
+const { PORT, API_PATH_BASE } = require("./constants");
 
 const port = process.env.PORT || 3000
 
@@ -11,8 +11,7 @@ var postData = JSON.stringify(data);
 
 var options = {
     hostname: process.env.SERVER_URL,
-    port: PORT,
-    path: `/refuges`,
+    path: `${API_PATH_BASE}/refuges`,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     json: true,
@@ -43,8 +42,7 @@ async function updateRefuge(data, name) {
 
     var options = {
         hostname: process.env.SERVER_URL,
-        port: PORT,
-        path: `/refuges/${name}`,
+        path: `${API_PATH_BASE}/refuges/${name}`,
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         json: true,
@@ -75,8 +73,7 @@ async function saveReservation(data) {
     
     var options = {
         hostname: process.env.SERVER_URL,
-        port: PORT,
-        path: `/reservation`,
+        path: `${API_PATH_BASE}/reservation`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         json: true,

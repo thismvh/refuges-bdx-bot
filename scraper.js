@@ -4,9 +4,7 @@ const cron = require("node-cron");
 const { updateRefuge } = require('./requests');
 const { capitalise, splitDateString } = require("./helpers")
 
-const { BDX_REFUGES_URL, MONTHS_TO_NUMS, PORT } = require("./constants");
-
-const port = process.env.PORT || 3000
+const { BDX_REFUGES_URL, MONTHS_TO_NUMS, API_PATH_BASE } = require("./constants");
 
 var browserInstance;
 var browserEndpoint;
@@ -263,8 +261,7 @@ async function updateAvailabilities() {
     // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
     var options = {
         hostname: process.env.SERVER_URL,
-        port: PORT,
-        path: `/all-refuges`,
+        path: `${API_PATH_BASE}/all-refuges`,
     };
     var allRefuges = await new Promise((resolve, reject) => {
         http.get(options, (res) => {
@@ -311,12 +308,10 @@ setInterval(() => {
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
 
-// cron.schedule("* * * * *", () => {
-//     console.log("Writing availabilities to JSON now...");
-//     updateAvailabilities();
-// })
-
-updateAvailabilities()
+cron.schedule("* * * * *", () => {
+    console.log("Writing availabilities to JSON now...");
+    updateAvailabilities();
+})
 
 module.exports = {
     findRefuges,
