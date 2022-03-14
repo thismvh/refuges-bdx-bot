@@ -116,7 +116,7 @@ async function getAvailableDates(refugeUrl) {
         }
 
         var currentMonth = await page.$(".ui-datepicker-month")
-        currentMonth = await currentMonth.evaluate(el => el.innerText);
+        currentMonth = await currentMonth.evaluate(el => el.innerText.toLowerCase());
         currentMonth = MONTHS_TO_NUMS[currentMonth];
         
         var newDates = await page.$$(daySelector);

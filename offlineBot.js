@@ -381,7 +381,7 @@ async function notifyOfAvailabilities() {
   for (const refuge of allRefuges) {
     var refugeName = refuge.name.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(refuge.availableDates !== undefined && refuge.availableDates.length > 0)
-      bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge}`)
+      bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
   }
 }
 
