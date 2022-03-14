@@ -284,7 +284,6 @@ async function updateAvailabilities() {
     for (const refuge of allRefuges) {
         var update = {};
         var availableDates = await getAvailableDates(refuge.url);
-        console.log("updateAvailabilities, availableDates is: " + availableDates)
         update.availableDates = availableDates;
 
         // If any of the user's wantedDates is available, go ahead and make the reservation
