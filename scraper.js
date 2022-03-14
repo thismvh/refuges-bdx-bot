@@ -318,6 +318,7 @@ async function updateAvailabilities() {
                 update.reservationUrls.push(urlToChequeVsCarte)
             }
         }
+        console.log(`update is looking like: ${JSON.stringify(update)}`)
         await updateRefuge(update, refuge.name)
     }
 
