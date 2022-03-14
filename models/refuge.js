@@ -8,7 +8,8 @@ const refugeSchema = new Schema({
     availableDates: [String],
     wantedDates: [String],
     reservation: ReservationSchema,
-    reservationUrls: [String]
+    reservationUrls: [String],
+    chatId: Number
 })
 
 const Refuge = mongoose.model("Refuge", refugeSchema);

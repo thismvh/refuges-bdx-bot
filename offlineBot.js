@@ -53,7 +53,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   var fullUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
   // Add this refuge to database if in case it didn't yet exist
   // TODO: probably this should return the updated refuge to avoid fetching the refuge again 
-  await updateRefuge({ name: relativeUrl, url: fullUrl }, relativeUrl)
+  await updateRefuge({ name: relativeUrl, url: fullUrl, chatId: ctx.chat.id }, relativeUrl)
 
   // Little feedback to user to keep attention
   await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`);
@@ -372,7 +372,7 @@ async function notifyOfAvailabilities() {
   for (const refuge of allRefuges) {
     var refugeName = refuge.name.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(refuge.availableDates !== undefined && refuge.availableDates.length > 0)
-      bot.telegram.sendMessage(chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
+      bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
   }
 }
 
