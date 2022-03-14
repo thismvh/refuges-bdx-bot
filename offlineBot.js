@@ -352,9 +352,6 @@ setInterval(() => {
 }, 20 * 60 * 1000);
 
 async function notifyOfAvailabilities() {
-  console.log("Current chatId is: " + chatId)
-  if(chatId === null) return
-
   var options = {
     hostname: process.env.SERVER_URL,
     path: `${API_PATH_BASE}/all-refuges`,
