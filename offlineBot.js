@@ -30,7 +30,8 @@ const {
   WARNING,
   WINK,
   PORT,
-  API_PATH_BASE
+  API_PATH_BASE,
+  ROLLING_EYES
 } = require("./constants");
 
 const { saveRefuge, updateRefuge } = require("./requests");
@@ -149,6 +150,12 @@ const listRefugesWizard = new WizardScene(
     //     urlShort: "le-hamac"
     //   }
     // ]
+
+    if(allRefuges.length == 0) {
+      await ctx.reply(`Mince, je peux pas trouver les refuges ${ROLLING_EYES} Juste un moment, laisse moi effacer ma mémoire et essayer encore une fois...`)
+      await delay(2000);
+      return ctx.scene.enter(LIST_REFUGES_SCENE)
+    }
 
     for (const refuge of allRefuges) {
       await ctx.replyWithPhoto(refuge.img, {
@@ -337,6 +344,7 @@ process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
 // Create express server just so that Heroku recognizes this script as a web process
 const express = require("express");
+const { createSecureContext } = require("tls");
 const app = express();
 
 app.get("/", (req, res) => {

@@ -43,46 +43,50 @@ async function closeBrowser() {
 
 async function findRefuges() {
     console.log("Starting Bordeaux Refuges scraping process");
-    // Connect to browser instance
-    const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
-    // console.log("Successfully connected to browser!!");
+    var browser, page;
+    var realRefuges = []
+    try {
+        // Connect to browser instance
+        browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
+        console.log("Successfully connected to browser!!");
 
-    // Open new tab
-    const page = await browser.newPage();
-    // console.log("Successfully opened new page!!");
+        // Open new tab
+        const page = await browser.newPage();
+        console.log("Successfully opened new page!!");
 
-    // Go to one.com login page
-    await page.goto(BDX_REFUGES_URL);
-    // console.log("Successfully went to refuges Bordeaux website!!");
+        // Go to Refuges home page
+        await page.goto(BDX_REFUGES_URL);
+        console.log("Successfully went to refuges Bordeaux website!!");
 
-    // Wait for refuges to load
-    var allRefugesSelector = "[class*='colonne-1 field--type-image'] a, [class*='colonne-2 field--type-image'] a, [class*='colonne-3 field--type-image'] a";
-    var fakeRefugesSelector = "a[href*='les-refuges']";
-    await page.waitForSelector(allRefugesSelector);
-    await page.waitForSelector(fakeRefugesSelector);
-    // console.log("Successfully waited for selectors!!");
-    
-    // Get list of all refuges
-    var allRefuges = await getRefuges(page, allRefugesSelector);
-    var fakeRefuges = await getRefuges(page, fakeRefugesSelector);
-    var realRefuges = allRefuges.filter(refuge => !fakeRefuges.map(ref => ref.name).includes(refuge.name));
+        // Wait for refuges to load
+        var allRefugesSelector = "[class*='colonne-1 field--type-image'] a, [class*='colonne-2 field--type-image'] a, [class*='colonne-3 field--type-image'] a";
+        var fakeRefugesSelector = "a[href*='les-refuges']";
+        await page.waitForSelector(allRefugesSelector);
+        await page.waitForSelector(fakeRefugesSelector);
+        console.log("Successfully waited for selectors!!");
 
-    realRefuges = realRefuges.map(refuge => (
-        {
-            name: refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" "),
-            url: refuge.url,
-            urlShort: refuge.urlShort,
-            img: refuge.img
-        }
-    ))
+        // Get list of all refuges
+        var allRefuges = await getRefuges(page, allRefugesSelector);
+        var fakeRefuges = await getRefuges(page, fakeRefugesSelector);
+        realRefuges = allRefuges.filter(refuge => !fakeRefuges.map(ref => ref.name).includes(refuge.name));
 
-    // console.log(`Real refuges found: ${realRefuges.length}`)
+        realRefuges = realRefuges.map(refuge => (
+            {
+                name: refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" "),
+                url: refuge.url,
+                urlShort: refuge.urlShort,
+                img: refuge.img
+            }
+        ))
+    } catch (err) {
+        console.log(err)
+    } finally {
+        // Close tab to avoid memory leaks
+        if(page !== undefined) await page.close();
+        if(browser !== undefined) browser.disconnect();
 
-    // Close tab to avoid memory leaks
-    await page.close();
-    browser.disconnect();
-
-    return realRefuges;
+        return realRefuges;
+    }
 };
 
 async function getAvailableDates(refugeUrl) {
