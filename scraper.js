@@ -121,7 +121,7 @@ async function getAvailableDates(refugeUrl) {
         
         var newDates = await page.$$(daySelector);
         newDates = await Promise.all(newDates.map(dayElem => dayElem.evaluate(el => el.innerText)))
-        newDates = newDates.map(day => ({ day: day, month: currentMonth }))
+        newDates = newDates.map(day => `${day}.${currentMonth}`)
 
         // Add available dates from this month to the total
         availableDates = availableDates.concat(newDates)
@@ -284,6 +284,7 @@ async function updateAvailabilities() {
     for (const refuge of allRefuges) {
         var update = {};
         var availableDates = await getAvailableDates(refuge.url);
+        console.log("updateAvailabilities, availableDates is: " + availableDates)
         update.availableDates = availableDates;
 
         // If any of the user's wantedDates is available, go ahead and make the reservation
