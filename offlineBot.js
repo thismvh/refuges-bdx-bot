@@ -2,7 +2,6 @@ const http = require("http");
 const cron = require("node-cron");
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
-const { readFileSync, watchFile, existsSync, mkdirSync, writeFileSync } = require("fs");
 
 const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
 const { delay } = require("./helpers")
