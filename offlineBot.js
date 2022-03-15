@@ -36,9 +36,9 @@ const {
 
 const { saveRefuge, updateRefuge } = require("./requests");
 
-const token = process.env.BOT_TOKEN
+const token = process.env.BOT_TOKEN_ROBOCHOU
 if (token === undefined) {
-  throw new Error("BOT_TOKEN must be provided!")
+  throw new Error("BOT_TOKEN_ROBOCHOU must be provided!")
 }
 
 var chatId = null;
