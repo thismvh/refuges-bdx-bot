@@ -272,7 +272,7 @@ const triggerDateSchedulingWizard = new WizardScene(
   async (ctx) => {
     ctx.wizard.state.reservationDetails.numGuests = ctx.message.text;
     const demoLink = "https://lesrefuges.bordeaux-metropole.fr/reservation/demande/caution/redirection/SxVz1dmPto79DNzmYCL5mOBUglCM1ZPxzJZ8Mh94I6M"
-    await ctx.reply(`Trop cool! C'est toooout ${GRIN}. Quand il y a des places libres pour les jours que tu m'as dit je ferai la réservation et tu recevra un link comme ça ${demoLink} \n\n Il te faudra seulement clicker sur le link et décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE} \n\n Mais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Il faut être vite ${WINK}`);
+    await ctx.reply(`Trop cool! C'est toooout ${GRIN}. Quand il y a des places libres pour les jours que tu m'as dit je ferai la réservation et tu recevra un link comme ça ${demoLink} \n\n Il te faudra seulement clicker sur le link et décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE} \n\n Mais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Il faut être vite ${WINK}`);
     const newReservation = { reservation: ctx.wizard.state.reservationDetails };
     await updateRefuge(newReservation, ctx.wizard.state.refugeUrlShort)
     await delay(500)
@@ -377,7 +377,7 @@ async function notifyOfAvailabilities() {
     }
       
     if(refuge.reservationUrls !== undefined && refuge.reservationUrls.length > 0) {
-      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls.pop()}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Tu dois être vite! ${WINK}`)
+      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls.pop()}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Tu dois être vite! ${WINK}`)
       // This updates properly because we popped in the line above!
       update.reservationUrls = refuge.reservationUrls;
       update.notify = false
