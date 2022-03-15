@@ -163,6 +163,11 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
         currentMonth = await currentMonth.evaluate(el => el.innerText.toLowerCase());
         currentMonth = MONTHS_TO_NUMS[currentMonth];
 
+        if(currentMonth === wantedDate.month) {
+            isCorrectMonth = true
+            break
+        }
+
         // Go to next month
         await page.waitForSelector(nextMonthSelector)
         var nextMonthButton = await page.$(nextMonthSelector)
