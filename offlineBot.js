@@ -367,7 +367,6 @@ async function notifyOfAvailabilities() {
   if(allRefuges.length == 0) return
 
   for (const refuge of allRefuges) {
-    console.log(`refuge.notify is looking like: ${refuge.notify}`)
     if(!refuge.notify) continue
 
     var update = {}
@@ -381,7 +380,6 @@ async function notifyOfAvailabilities() {
       await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls.pop()}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Tu dois être vite! ${WINK}`)
       // This updates properly because we popped in the line above!
       update.reservationUrls = refuge.reservationUrls;
-      console.log(`update.reservationUrls is looking like: ${JSON.stringify(update.reservationUrls)}`)
       update.notify = false
     }
 

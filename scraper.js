@@ -329,7 +329,6 @@ async function updateAvailabilities() {
                 update.wantedDates = refuge.wantedDates.filter(item => item !== date)
             }
         }
-        console.log(`update is looking like: ${JSON.stringify(update)}`)
         await updateRefuge(update, refuge.name)
     }
 
