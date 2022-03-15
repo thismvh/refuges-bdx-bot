@@ -378,7 +378,8 @@ async function notifyOfAvailabilities() {
     }
       
     if(refuge.reservationUrls !== undefined && refuge.reservationUrls.length > 0) {
-      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls[refuge.reservationUrls.length - 1]}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Tu dois être vite! ${WINK}`)
+      // Pop last reservationUrl!
+      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls.pop()}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Tu dois être vite! ${WINK}`)
       resetNotify = true
     }
 
