@@ -174,10 +174,12 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
 
     // Select day
     var daySelector = `.opened[data-handler='selectDay'] [data-date='${wantedDate.day}']`;
+    console.log(`makeReservation: daySelector is: ${daySelector}`)
     try {
         await page.waitForSelector(daySelector, { timeout: 1000 })
     } catch (err){
         console.log("makeReservation: no available dates were found!")
+        console.log(err)
         return null
     }
     var dayElement = await page.$(daySelector)
