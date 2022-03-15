@@ -326,6 +326,7 @@ async function updateAvailabilities() {
                 if(update.reservationUrls === undefined)
                     update.reservationUrls = []
                 update.reservationUrls.push(urlToChequeVsCarte)
+                update.wantedDates = refuge.wantedDates.filter(item => item !== date)
             }
         }
         console.log(`update is looking like: ${JSON.stringify(update)}`)
