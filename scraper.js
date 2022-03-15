@@ -314,6 +314,8 @@ async function updateAvailabilities() {
         var availableDates = await getAvailableDates(refuge.url);
         update.availableDates = availableDates;
 
+        if(availableDates.length === 0) update.notify = true
+
         // If any of the user's wantedDates is available, go ahead and make the reservation
         var compatibleDates = refuge.wantedDates.filter(value => availableDates.includes(value));
         for (const date of compatibleDates) {

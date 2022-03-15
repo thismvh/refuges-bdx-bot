@@ -53,7 +53,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   var fullUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
   // Add this refuge to database if in case it didn't yet exist
   // TODO: probably this should return the updated refuge to avoid fetching the refuge again 
-  await updateRefuge({ name: relativeUrl, url: fullUrl, chatId: ctx.chat.id }, relativeUrl)
+  await updateRefuge({ name: relativeUrl, url: fullUrl, chatId: ctx.chat.id, notify: true }, relativeUrl)
 
   // Little feedback to user to keep attention
   await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`);
@@ -367,11 +367,22 @@ async function notifyOfAvailabilities() {
   if(allRefuges.length == 0) return
 
   for (const refuge of allRefuges) {
+    console.log(`refuge.notify is looking like: ${refuge.notify}`)
+    if(!refuge.notify) continue
+
+    var resetNotify = false;
     var refugeName = refuge.name.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
-    if(refuge.availableDates !== undefined && refuge.availableDates.length > 0)
-      bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
-    if(refuge.reservationUrls !== undefined && refuge.reservationUrls.length > 0)
-      bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls[refuge.reservationUrls.length - 1]}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Tu dois être vite! ${WINK}`)
+    if(refuge.availableDates !== undefined && refuge.availableDates.length > 0) {
+      await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
+      resetNotify = true;
+    }
+      
+    if(refuge.reservationUrls !== undefined && refuge.reservationUrls.length > 0) {
+      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls[refuge.reservationUrls.length - 1]}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 20 minutes pour donner la caution!! Tu dois être vite! ${WINK}`)
+      resetNotify = true
+    }
+
+    if(resetNotify) await updateRefuge({ notify: false }, refuge.name)
   }
 }
 
