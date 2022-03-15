@@ -173,7 +173,7 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     console.log(`Arrived at correct month, which is: ${currentMonth} and should be ${wantedDate.month}`)
 
     // Select day
-    var daySelector = `.opened[data-handler='selectDay'][data-date='${wantedDate.day}']`;
+    var daySelector = `.opened[data-handler='selectDay'] [data-date='${wantedDate.day}']`;
     try {
         await page.waitForSelector(daySelector, { timeout: 1000 })
     } catch (err){
