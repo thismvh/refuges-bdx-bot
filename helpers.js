@@ -16,7 +16,7 @@ async function delay(time) {
 
 function splitDateString(string) {
     return string.split(",").map(date => {
-        var dateFormat = date.match(/(\d\d)\.(\d?\d)/)
+        var dateFormat = date.match(/(\d?\d)\.(\d?\d)/)
         return { day: dateFormat[1], month: dateFormat[2], year: dateFormat[3] }
       })[0]
 }
