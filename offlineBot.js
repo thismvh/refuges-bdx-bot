@@ -256,7 +256,8 @@ const triggerDateSchedulingWizard = new WizardScene(
     return ctx.wizard.next()
   },
   async (ctx) => {
-    ctx.wizard.state.reservationDetails.gender = ctx.message.text;
+    var gender = ctx.message.text.match(/[Mm]\./)
+    ctx.wizard.state.reservationDetails.gender = gender === null ? "mme" : "m";
     await ctx.reply(`Ok, cool! Il me reste juste 2 choses pour finir...`);
     await delay(500)
     await ctx.reply(`D'abord, ton code postal:`)

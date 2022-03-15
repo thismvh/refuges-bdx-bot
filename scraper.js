@@ -202,9 +202,8 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     await page.waitForTimeout(1000)
 
     // Select gender
-    var gender = reservationDetails.gender
-    await page.waitForSelector("#edit-civilite-mme");
-    await page.click("#edit-civilite-mme");
+    await page.waitForSelector(`#edit-civilite-${reservationDetails.gender}`);
+    await page.click(`#edit-civilite-${reservationDetails.gender}`);
     console.log("Successfully clicked gender!")
 
     // Input last name
