@@ -233,12 +233,13 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     console.log("Successfully typed postal code!")
 
     // Input date of birth
+    var birthday = splitDateString(reservationDetails.birthday);
     await page.waitForSelector("#edit-date-de-naissance");
-    await page.type("#edit-date-de-naissance", reservationDetails.birthday.day, { delay: 30 });
+    await page.type("#edit-date-de-naissance", birthday.day, { delay: 30 });
     await page.focus("#edit-date-de-naissance", { delay: 300 });
-    await page.type("#edit-date-de-naissance", reservationDetails.birthday.month, { delay: 30 });
+    await page.type("#edit-date-de-naissance", birthday.month, { delay: 30 });
     await page.focus("#edit-date-de-naissance", { delay: 300 });
-    await page.type("#edit-date-de-naissance", reservationDetails.birthday.year, { delay: 30 });
+    await page.type("#edit-date-de-naissance", birthday.year, { delay: 30 });
     console.log("Successfully typed birthday!")
 
     // Accept general terms and conditions
