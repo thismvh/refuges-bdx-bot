@@ -45,6 +45,9 @@ var chatId = null;
 
 const stepHandler = new Composer()
 stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (ctx) => {
+  // Answer callback to remove loading icon on button after clicking
+  ctx.answerCbQuery();
+
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
   var refugeName = relativeUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
 
@@ -86,6 +89,9 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
 })
 
 stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
+  // Answer callback to remove loading icon on button after clicking
+  ctx.answerCbQuery();
+
   var moreRefugesAnswer = ctx.match.input.substring(ACTION_MORE_REFUGES.length + 1);
   var wantsMoreRefuges = moreRefugesAnswer === "YES";
 
@@ -98,6 +104,9 @@ stepHandler.action(new RegExp(ACTION_MORE_REFUGES + "_+", "g"), async (ctx) => {
 })
 
 stepHandler.action(new RegExp(ACTION_SCHEDULE_DATE + "_+", "g"), async (ctx) => {
+  // Answer callback to remove loading icon on button after clicking
+  ctx.answerCbQuery();
+  
   var scheduleDateAnswer = ctx.match.input.substring(ACTION_SCHEDULE_DATE.length + 1);
   var wantsDateSchedule = /_YES/.test(scheduleDateAnswer);
   var relativeUrl = scheduleDateAnswer.match(/(.*)?_/)[1];
