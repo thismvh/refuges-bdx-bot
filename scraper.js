@@ -243,21 +243,21 @@ async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
 
     // Accept general terms and conditions
     await page.waitForSelector("#edit-cgu");
-    await page.click("#edit-cgu");
+    await page.click("#edit-cgu", { delay: 30 });
     console.log("Successfully agreed to terms!")
 
     // Accept GDPR conditions
     await page.waitForSelector("#edit-rgpd-consentement");
-    await page.click("#edit-rgpd-consentement");
+    await page.click("#edit-rgpd-consentement", { delay: 30 });
     console.log("Successfully agreed to GDPR!")
 
     // Submit form
     await page.waitForSelector("#edit-submit");
-    await page.click("#edit-submit");
+    await page.click("#edit-submit", { delay: 30 });
     console.log("Successfully submitted!")
 
     // Wait for new page to load
-    await page.waitForSelector("#demande-caution-cheque-form");
+    await page.waitForSelector("#demande-caution-bancaire-form");
     console.log("Successfully arrived at new page!")
 
     // Save URL to send it to bot
