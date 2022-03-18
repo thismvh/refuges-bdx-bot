@@ -330,6 +330,7 @@ async function updateAvailabilities() {
                     update.reservationUrls = []
                 update.reservationUrls.push(urlToChequeVsCarte)
                 update.wantedDates = refuge.wantedDates.filter(item => item !== date)
+                update.notify = true;
             }
         }
         await updateRefuge(update, refuge.name)

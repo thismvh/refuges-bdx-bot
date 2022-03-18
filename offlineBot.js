@@ -393,6 +393,7 @@ async function notifyOfAvailabilities() {
       update.notify = false
     }
 
+    // If we either already sent a message and/or we removed the last reservationUrl
     if(update.notify !== undefined || update.reservationUrls !== undefined)
       await updateRefuge(update, refuge.name)
   }
