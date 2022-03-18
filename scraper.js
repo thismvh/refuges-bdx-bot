@@ -142,6 +142,10 @@ async function getAvailableDates(refugeUrl) {
 // TODO: READ RESERVATION DETAILS FROM JSON IN THIS FUNCTION? OR SHOULD THE FUNCTION CALLING makeReservation (would probably be writeAvailabilitiesJson cron job I guess?) READ THE JSON FILE BEFORE HAND
 async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     console.log("Starting makeReservation process...")
+
+    // Reservation details might not have been added by the user yet
+    if(reservationDetails === undefined) return null
+
     // Connect to browser
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
     console.log("Successfully connected to browser!")
