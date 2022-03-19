@@ -400,7 +400,7 @@ async function notifyOfAvailabilities() {
 }
 
 // Maybe we could send a GET request from the Netlify server as a sort of "webhook" to avoid constantly polling??
-cron.schedule("30 * * * * *", () => {
+cron.schedule("30 * 7-23 * 3-11 *", () => {
   console.log("Notifying of potential new availabilities now...");
   notifyOfAvailabilities();
 })

@@ -348,7 +348,7 @@ setInterval(() => {
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
 
-cron.schedule("* * * * *", () => {
+cron.schedule("* 7-23 * 3-11 *", () => {
     console.log("Writing availabilities to JSON now...");
     updateAvailabilities();
 })
