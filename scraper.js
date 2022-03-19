@@ -2,7 +2,7 @@ require('dotenv').config();
 const puppeteer = require("puppeteer");
 const cron = require("node-cron");
 const { updateRefuge } = require('./requests');
-const { capitalise, splitDateString } = require("./helpers")
+const { capitalise, splitDateString, arrayIsEqual } = require("./helpers")
 
 const { BDX_REFUGES_URL, MONTHS_TO_NUMS, API_PATH_BASE } = require("./constants");
 
@@ -333,7 +333,8 @@ async function updateAvailabilities() {
                 update.notify = true;
             }
         }
-        await updateRefuge(update, refuge.name)
+        if(!arrayIsEqual(refuge.availableDates, availableDates))
+            await updateRefuge(update, refuge.name)
     }
 
     // Close browser
