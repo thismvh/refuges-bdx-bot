@@ -333,8 +333,11 @@ async function updateAvailabilities() {
                 update.notify = true;
             }
         }
-        if(!arrayIsEqual(refuge.availableDates, availableDates))
+        if(!arrayIsEqual(refuge.availableDates, availableDates)) {
+            console.log(`Updating database now because refuge.availabilities is: ${refuge.availableDates} and availableDates is: ${availableDates}`);
             await updateRefuge(update, refuge.name)
+        }
+            
     }
 
     // Close browser
