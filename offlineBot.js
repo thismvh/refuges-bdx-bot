@@ -49,7 +49,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   ctx.answerCbQuery();
 
   var relativeUrl = ctx.match.input.substring(ACTION_FETCH_AVAILABLE_DATES.length + 1);
-  var refugeName = relativeUrl.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+  var refugeName = relativeUrl.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
 
   console.log("YOOOOOOO, THIS IS THE CONTEXT AFTER PRESSING A BUTTON DAWG!: " + `${BDX_REFUGES_URL}/${relativeUrl}`);
 
@@ -262,7 +262,7 @@ const triggerDateSchedulingWizard = new WizardScene(
     ctx.wizard.state.reservationDetails.postalCode = ctx.message.text;
     await ctx.reply(`Meeeeerci beacoup! ${GRIN}`);
     await delay(500)
-    var refugeName = ctx.wizard.state.refugeUrlShort.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+    var refugeName = ctx.wizard.state.refugeUrlShort.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     await ctx.reply(`Et finalement, le nombre d'accompagnants qui veulent venir à ${refugeName} avec toi:`)
     return ctx.wizard.next()
   },
@@ -367,7 +367,7 @@ async function notifyOfAvailabilities() {
     if(!refuge.notify) continue
 
     var update = {}
-    var refugeName = refuge.name.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+    var refugeName = refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(refuge.availableDates !== undefined && refuge.availableDates.length > 0) {
       await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
       update.notify = false;
