@@ -139,7 +139,6 @@ async function getAvailableDates(refugeUrl) {
     return availableDates;
 }
 
-// TODO: READ RESERVATION DETAILS FROM JSON IN THIS FUNCTION? OR SHOULD THE FUNCTION CALLING makeReservation (would probably be writeAvailabilitiesJson cron job I guess?) READ THE JSON FILE BEFORE HAND
 async function makeReservation(refugeUrl, wantedDate, reservationDetails) {
     console.log("Starting makeReservation process...")
 
@@ -293,7 +292,6 @@ function getRefuges(page, selector) {
 
 async function updateAvailabilities() {
     // Read previous availabilities (if available)
-    // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
     var options = {
         hostname: process.env.SERVER_URL,
         path: `${API_PATH_BASE}/all-refuges`,

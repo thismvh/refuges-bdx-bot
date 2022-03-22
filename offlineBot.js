@@ -34,7 +34,7 @@ const {
   ROLLING_EYES
 } = require("./constants");
 
-const { saveRefuge, updateRefuge } = require("./requests");
+const { updateRefuge } = require("./requests");
 
 const token = process.env.BOT_TOKEN_ROBOCHOU
 if (token === undefined) {
@@ -63,7 +63,6 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   await delay(1500);
   
   // Fetch refuge from database
-  // TODO: change this from localhost to process.env.BOT_DOMAIN || localhost depending on process.env.NODE_ENV
   var options = {
     hostname: process.env.SERVER_URL,
     path: `${API_PATH_BASE}/refuges/${relativeUrl}`,
