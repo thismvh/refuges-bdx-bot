@@ -136,20 +136,6 @@ const listRefugesWizard = new WizardScene(
     await ctx.reply(WHICH_REFUGE_MESSAGE)
 
     var allRefuges = await findRefuges();
-    // var allRefuges = [
-    //   { 
-    //     name: "La Station Orbitale",
-    //     img: "https://lesrefuges.bordeaux-metropole.fr/sites/MET-REFUGES-DRUPAL/files/styles/ph/public/2019-07/BM_Station_Orbitale_%28c%29_J-B_Menges_DJI_0787_940x400px.jpg?itok=I2SFSJvE",
-    //     url: "https://lesrefuges.bordeaux-metropole.fr/la-station-orbitale",
-    //     urlShort: "la-station-orbitale"
-    //   },
-    //   { 
-    //     name: "Le Hamac",
-    //     img: "https://lesrefuges.bordeaux-metropole.fr/sites/MET-REFUGES-DRUPAL/files/2019-02/Hamac_bruitdufrigo_028-940x400.jpg",
-    //     url: "https://lesrefuges.bordeaux-metropole.fr/le-hamac",
-    //     urlShort: "le-hamac"
-    //   }
-    // ]
 
     if(allRefuges.length == 0) {
       await ctx.reply(`Mince, je peux pas trouver les refuges ${ROLLING_EYES} Juste un moment, laisse moi effacer ma mémoire et essayer encore une fois...`)
@@ -276,7 +262,8 @@ const triggerDateSchedulingWizard = new WizardScene(
     ctx.wizard.state.reservationDetails.postalCode = ctx.message.text;
     await ctx.reply(`Meeeeerci beacoup! ${GRIN}`);
     await delay(500)
-    await ctx.reply(`Et finalement, le nombre d'accompagnants qui veulent venir à ${ctx.wizard.state.refugeUrlShort} avec toi:`)
+    var refugeName = ctx.wizard.state.refugeUrlShort.replace(/^(?:\/\/|[^/]+)*\//, '').toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
+    await ctx.reply(`Et finalement, le nombre d'accompagnants qui veulent venir à ${refugeName} avec toi:`)
     return ctx.wizard.next()
   },
   async (ctx) => {
