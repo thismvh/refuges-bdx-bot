@@ -81,7 +81,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
     return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
   }
   else {
-    await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: + ${fullUrl}`);
+    await ctx.reply(`Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${fullUrl}`);
     await delay(1000);
     return ctx.scene.enter(SCHEDULE_DATE_SCENE, { refugeUrlShort: relativeUrl });
   }
@@ -370,6 +370,7 @@ async function notifyOfAvailabilities() {
     var hasNewAvailabilities = false;
     var update = {};
     var availableDates = await getAvailableDates(refuge.url);
+    var reservedDate;
     update.availableDates = availableDates;
 
     // Only re-notify the user about the same refuge when availableDates was 0 before
@@ -385,6 +386,7 @@ async function notifyOfAvailabilities() {
         var confirmationUrl = await makeReservation(refuge.url, date, refuge.reservation)
         // Update the reservationUrls if a successful reservation could be made
         if(confirmationUrl != null) {
+            reservedDate = date;
             if(update.reservationUrls === undefined) update.reservationUrls = []
             update.reservationUrls.push(confirmationUrl)
             // Remove the current date from wantedDates since we successfully made a reservation for that day
@@ -405,7 +407,7 @@ async function notifyOfAvailabilities() {
     if(update.reservationUrls !== undefined && update.reservationUrls.length > 0) {
       // TODO: Why even keep an array of URLs if there's always just 0 or 1 values inside it?
       var confirmationUrl = update.reservationUrls.pop()
-      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${confirmationUrl}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Tu dois être vite! ${WINK}`)
+      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName} le jour ${reservedDate}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${confirmationUrl}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Tu dois être vite! ${WINK}`)
       update.notify = false
     }
 
