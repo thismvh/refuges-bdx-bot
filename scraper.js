@@ -279,6 +279,7 @@ function getRefuges(page, selector) {
     return page.evaluate((sel) => {
         let elements = Array.from(document.querySelectorAll(sel));
         let refuges = elements.map(element => {
+            // TODO: name and urlShort are exactly equal??
             return { 
                 name:  element.href.replace(/^(?:\/\/|[^/]+)*\//, ''),
                 url: element.href,
