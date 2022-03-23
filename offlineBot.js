@@ -3,8 +3,8 @@ const cron = require("node-cron");
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
 
-const { findRefuges, initialiseBrowser, capitalise } = require("./scraper");
-const { delay } = require("./helpers")
+const { findRefuges, initialiseBrowser, closeBrowser, getAvailableDates, makeReservation, capitalise } = require("./scraper");
+const { delay, arrayIsEqual } = require("./helpers")
 const { 
   ACTION_FETCH_AVAILABLE_DATES,
   ACTION_MORE_REFUGES,
@@ -362,31 +362,64 @@ async function notifyOfAvailabilities() {
 
   if(allRefuges.length == 0) return
 
+  // Initialise browser
+  await initialiseBrowser(); 
+
   for (const refuge of allRefuges) {
+    // Get new available dates
+    var hasNewAvailabilities = false;
+    var update = {};
+    var availableDates = await getAvailableDates(refuge.url);
+    update.availableDates = availableDates;
+
+    // Only re-notify the user about the same refuge when availableDates was 0 before
+    if(availableDates.length === 0) update.notify = true
+
+    // Only update database if there's any new info to add
+    hasNewAvailabilities = !arrayIsEqual(refuge.availableDates, availableDates);
+
+    // If any of the user's wantedDates is available, go ahead and make the reservation
+    var compatibleDates = refuge.wantedDates.filter(value => availableDates.includes(value));
+    for (const date of compatibleDates) {
+        // makeReservation returns a confirmation URL
+        var confirmationUrl = await makeReservation(refuge.url, date, refuge.reservation)
+        // Update the reservationUrls if a successful reservation could be made
+        if(confirmationUrl != null) {
+            if(update.reservationUrls === undefined) update.reservationUrls = []
+            update.reservationUrls.push(confirmationUrl)
+            // Remove the current date from wantedDates since we successfully made a reservation for that day
+            update.wantedDates = refuge.wantedDates.filter(item => item !== date)
+            update.notify = true;
+        }
+    }
+
+    // Notify of new availabilities in case there are any
     if(!refuge.notify) continue
 
-    var update = {}
     var refugeName = refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
-    if(refuge.availableDates !== undefined && refuge.availableDates.length > 0) {
+    if(availableDates.length > 0) {
       await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
       update.notify = false;
     }
-      
-    if(refuge.reservationUrls !== undefined && refuge.reservationUrls.length > 0) {
-      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${refuge.reservationUrls.pop()}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Tu dois être vite! ${WINK}`)
-      // This updates properly because we popped in the line above!
-      update.reservationUrls = refuge.reservationUrls;
+    
+    if(update.reservationUrls !== undefined && update.reservationUrls.length > 0) {
+      // TODO: Why even keep an array of URLs if there's always just 0 or 1 values inside it?
+      var confirmationUrl = update.reservationUrls.pop()
+      await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${confirmationUrl}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Tu dois être vite! ${WINK}`)
       update.notify = false
     }
 
-    // If we either already sent a message and/or we removed the last reservationUrl
-    if(update.notify !== undefined || update.reservationUrls !== undefined)
+    var userWasNotified = update.notify !== undefined || update.reservationUrls !== undefined
+    if(hasNewAvailabilities || userWasNotified)
       await updateRefuge(update, refuge.name)
   }
+
+  // Close browser
+  await closeBrowser();
 }
 
-// Maybe we could send a GET request from the Netlify server as a sort of "webhook" to avoid constantly polling??
-cron.schedule("30 * 7-23 * 3-11 *", () => {
+// TODO: Maybe we could send a GET request from the Netlify server as a sort of "webhook" to avoid constantly polling??
+cron.schedule("* 7-23 * 3-11 *", () => {
   console.log("Notifying of potential new availabilities now...");
   notifyOfAvailabilities();
 })

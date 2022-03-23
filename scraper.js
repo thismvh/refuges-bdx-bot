@@ -290,57 +290,57 @@ function getRefuges(page, selector) {
     }, selector);
 };
 
-async function updateAvailabilities() {
-    // Read previous availabilities (if available)
-    var options = {
-        hostname: process.env.SERVER_URL,
-        path: `${API_PATH_BASE}/all-refuges`,
-    };
-    var allRefuges = await new Promise((resolve, reject) => {
-        http.get(options, (res) => {
-            var body = ""
-            res.on("data", (chunk) => body += chunk );
-            res.on("end", () => resolve(JSON.parse(body)));
-        });
-    })
+// async function updateAvailabilities() {
+//     // Read previous availabilities (if available)
+//     var options = {
+//         hostname: process.env.SERVER_URL,
+//         path: `${API_PATH_BASE}/all-refuges`,
+//     };
+//     var allRefuges = await new Promise((resolve, reject) => {
+//         http.get(options, (res) => {
+//             var body = ""
+//             res.on("data", (chunk) => body += chunk );
+//             res.on("end", () => resolve(JSON.parse(body)));
+//         });
+//     })
 
-    if(allRefuges.length == 0) return
+//     if(allRefuges.length == 0) return
 
-    // Initialise browser
-    await initialiseBrowser(); 
+//     // Initialise browser
+//     await initialiseBrowser(); 
 
-    // Get availabilities for each refuges
-    for (const refuge of allRefuges) {
-        var update = {};
-        var availableDates = await getAvailableDates(refuge.url);
-        update.availableDates = availableDates;
+//     // Get availabilities for each refuges
+//     for (const refuge of allRefuges) {
+//         var update = {};
+//         var availableDates = await getAvailableDates(refuge.url);
+//         update.availableDates = availableDates;
 
-        if(availableDates.length === 0) update.notify = true
+//         if(availableDates.length === 0) update.notify = true
 
-        // If any of the user's wantedDates is available, go ahead and make the reservation
-        var compatibleDates = refuge.wantedDates.filter(value => availableDates.includes(value));
-        for (const date of compatibleDates) {
-            // makeReservation returns a URL as a confirmation link
-            var urlToChequeVsCarte = await makeReservation(refuge.url, date, refuge.reservation)
-            // Update the reservationUrls if a successful reservation could be made
-            if(urlToChequeVsCarte != null) {
-                if(update.reservationUrls === undefined)
-                    update.reservationUrls = []
-                update.reservationUrls.push(urlToChequeVsCarte)
-                update.wantedDates = refuge.wantedDates.filter(item => item !== date)
-                update.notify = true;
-            }
-        }
-        if(!arrayIsEqual(refuge.availableDates, availableDates)) {
-            console.log(`Updating database now because refuge.availabilities is: ${refuge.availableDates} and availableDates is: ${availableDates}`);
-            await updateRefuge(update, refuge.name)
-        }
+//         // If any of the user's wantedDates is available, go ahead and make the reservation
+//         var compatibleDates = refuge.wantedDates.filter(value => availableDates.includes(value));
+//         for (const date of compatibleDates) {
+//             // makeReservation returns a URL as a confirmation link
+//             var urlToChequeVsCarte = await makeReservation(refuge.url, date, refuge.reservation)
+//             // Update the reservationUrls if a successful reservation could be made
+//             if(urlToChequeVsCarte != null) {
+//                 if(update.reservationUrls === undefined)
+//                     update.reservationUrls = []
+//                 update.reservationUrls.push(urlToChequeVsCarte)
+//                 update.wantedDates = refuge.wantedDates.filter(item => item !== date)
+//                 update.notify = true;
+//             }
+//         }
+//         if(!arrayIsEqual(refuge.availableDates, availableDates)) {
+//             console.log(`Updating database now because refuge.availabilities is: ${refuge.availableDates} and availableDates is: ${availableDates}`);
+//             await updateRefuge(update, refuge.name)
+//         }
             
-    }
+//     }
 
-    // Close browser
-    await closeBrowser();
-}
+//     // Close browser
+//     await closeBrowser();
+// }
 
 // Ping heroku app every 20 minutes to prevent it from idling
 var http = require("http");
@@ -349,16 +349,17 @@ setInterval(() => {
   http.get(process.env.BOT_DOMAIN)
 }, 20 * 60 * 1000);
 
-cron.schedule("* 7-23 * 3-11 *", () => {
-    console.log("Writing availabilities to JSON now...");
-    updateAvailabilities();
-})
+// cron.schedule("* 7-23 * 3-11 *", () => {
+//     console.log("Writing availabilities to JSON now...");
+//     updateAvailabilities();
+// })
 
 module.exports = {
     findRefuges,
     getAvailableDates,
     capitalise,
     initialiseBrowser,
+    closeBrowser,
     updateAvailabilities,
     makeReservation
 }
