@@ -360,6 +360,5 @@ module.exports = {
     capitalise,
     initialiseBrowser,
     closeBrowser,
-    updateAvailabilities,
     makeReservation
 }
