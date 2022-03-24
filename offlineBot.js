@@ -396,7 +396,7 @@ async function notifyOfAvailabilities() {
     }
 
     // Notify of new availabilities in case there are any
-    if(!update.notify) continue
+    if(!update.notify && !hasNewAvailabilities) continue
 
     var refugeName = refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(availableDates.length > 0) {
