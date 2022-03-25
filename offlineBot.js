@@ -21,8 +21,6 @@ const {
   TINQUIETE_JY_VAIS,
   WHICH_REFUGE_MESSAGE,
   GOING_TO_SLEEP,
-  DATA_DIR_PATH,
-  DATA_FILE_NAME,
   NEW_MOON_FACE,
   GRIN,
   EXPLODING_HEAD,
@@ -203,9 +201,6 @@ const triggerDateSchedulingWizard = new WizardScene(
     var newDates = { wantedDates: ctx.message.text.split(",") }
     await updateRefuge(newDates, ctx.wizard.state.refugeUrlShort)
 
-
-    // TODO: MAKE NEW ctx.wizard.next() AND ASK FOR RESERVATION DETAILS, STORE RESERVATION DETAILS IN A SEPARATE JSON FILE
-
     await ctx.reply("Ok, je fais attention à ces jours! :)");
     await delay(1000);
     await ctx.reply(`Pour faire la réservation, j'aurais besoin de quelques dates ${NEW_MOON_FACE}`);
@@ -331,7 +326,6 @@ process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
 // Create express server just so that Heroku recognizes this script as a web process
 const express = require("express");
-const { createSecureContext } = require("tls");
 const app = express();
 
 app.get("/", (req, res) => {
@@ -340,12 +334,6 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`)
 })
-
-// Ping heroku app every 20 minutes to prevent it from idling
-setInterval(() => {
-  console.log("Pinging Heroku from offlineBot now...")
-  http.get(process.env.BOT_DOMAIN)
-}, 20 * 60 * 1000);
 
 async function notifyOfAvailabilities() {
   var options = {
