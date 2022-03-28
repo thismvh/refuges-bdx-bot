@@ -399,7 +399,7 @@ async function notifyOfAvailabilities() {
       update.notify = false
     }
 
-    var userWasNotified = update.notify !== undefined || update.reservationUrls !== undefined
+    var userWasNotified = update.notify === false|| update.reservationUrls !== undefined
     if(hasNewAvailabilities || userWasNotified)
       await updateRefuge(update, refuge.name)
   }
