@@ -387,12 +387,12 @@ async function notifyOfAvailabilities() {
     if(!update.notify && !hasNewAvailabilities) continue
 
     var refugeName = refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
-    if(availableDates.length > 0) {
+    if(availableDates.length > 0 && update.notify) {
       await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
       update.notify = false;
     }
     
-    if(update.reservationUrls !== undefined && update.reservationUrls.length > 0) {
+    if(update.reservationUrls !== undefined && update.reservationUrls.length > 0 && update.notify) {
       // TODO: Why even keep an array of URLs if there's always just 0 or 1 values inside it?
       var confirmationUrl = update.reservationUrls.pop()
       await bot.telegram.sendMessage(refuge.chatId, `Eloooo, j'ai fait une réservation pour toiiiii pour ${refugeName} le jour ${reservedDate}... ${NEW_MOON_FACE} Il te faut seulement clicker sur ce link: ${confirmationUrl}\n\net décider quel mode de caution tu veux et c'est fini, tu a la place garantie!! ${PARTYING_FACE}\n\nMais ATTENTION ${WARNING}${WARNING}${WARNING}, tu as seulement 2 heures pour donner la caution!! Tu dois être vite! ${WINK}`)
