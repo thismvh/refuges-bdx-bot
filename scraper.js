@@ -110,6 +110,7 @@ async function getAvailableDates(refugeUrl) {
         try {
             await page.waitForSelector(daySelector, { timeout: 1000 })
         } catch (error) {
+            console.log("No dates found on round " + index)
             if(index < monthsInAdvance) continue
             return availableDates
         }
