@@ -103,10 +103,9 @@ async function getAvailableDates(refugeUrl) {
     var daySelector = ".opened[data-handler='selectDay'] a"
     var nextMonthSelector = "[data-handler='next']"
     var availableDates = [];
-    var monthsInAdvance = 2;
+    var monthsInAdvance = 1;
 
     for (let index = 0; index <= [...Array(monthsInAdvance).keys()].length; index++) {
-        console.log(refugeUrl + ": availableDates has length " + availableDates.length)
         // Get available dates of current month
         try {
             await page.waitForSelector(daySelector, { timeout: 1000 })
@@ -125,6 +124,7 @@ async function getAvailableDates(refugeUrl) {
 
         // Add available dates from this month to the total
         availableDates = availableDates.concat(newDates)
+        console.log(refugeUrl + ": availableDates has length " + availableDates.length + " and currentMonth is: " + currentMonth)
 
         // Go to next month
         await page.waitForSelector(nextMonthSelector)
