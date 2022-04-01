@@ -103,8 +103,10 @@ async function getAvailableDates(refugeUrl) {
     var daySelector = ".opened[data-handler='selectDay'] a"
     var nextMonthSelector = "[data-handler='next']"
     var availableDates = [];
-    var monthsInAdvance = 5;
-    for (let index = 0; index < [...Array(monthsInAdvance).keys()].length; index++) {
+    var initialMonth = -1;
+    var monthsInAdvance = 2;
+    var seenAllMonths = false
+    while(!seenAllMonths) {
         console.log(refugeUrl + ": availableDates has length " + availableDates.length)
         // Get available dates of current month
         try {
@@ -116,6 +118,9 @@ async function getAvailableDates(refugeUrl) {
         var currentMonth = await page.$(".ui-datepicker-month")
         currentMonth = await currentMonth.evaluate(el => el.innerText.toLowerCase());
         currentMonth = MONTHS_TO_NUMS[currentMonth];
+        console.log("Current month is: " + currentMonth)
+
+        if(initialMonth === -1) initialMonth = currentMonth
         
         var newDates = await page.$$(daySelector);
         newDates = await Promise.all(newDates.map(dayElem => dayElem.evaluate(el => el.innerText)))
@@ -128,7 +133,35 @@ async function getAvailableDates(refugeUrl) {
         await page.waitForSelector(nextMonthSelector)
         var nextMonthButton = await page.$(nextMonthSelector)
         await page.evaluate(e => e.click(), nextMonthButton);
+
+        if(currentMonth === initialMonth + monthsInAdvance) seenAllMonths = true
     }
+
+    // for (let index = 0; index < [...Array(monthsInAdvance).keys()].length; index++) {
+    //     console.log(refugeUrl + ": availableDates has length " + availableDates.length)
+    //     // Get available dates of current month
+    //     try {
+    //         await page.waitForSelector(daySelector, { timeout: 1000 })
+    //     } catch (error) {
+    //         return availableDates
+    //     }
+
+    //     var currentMonth = await page.$(".ui-datepicker-month")
+    //     currentMonth = await currentMonth.evaluate(el => el.innerText.toLowerCase());
+    //     currentMonth = MONTHS_TO_NUMS[currentMonth];
+        
+    //     var newDates = await page.$$(daySelector);
+    //     newDates = await Promise.all(newDates.map(dayElem => dayElem.evaluate(el => el.innerText)))
+    //     newDates = newDates.map(day => `${day}.${currentMonth}`)
+
+    //     // Add available dates from this month to the total
+    //     availableDates = availableDates.concat(newDates)
+
+    //     // Go to next month
+    //     await page.waitForSelector(nextMonthSelector)
+    //     var nextMonthButton = await page.$(nextMonthSelector)
+    //     await page.evaluate(e => e.click(), nextMonthButton);
+    // }
 
     // Close tab to avoid memory leaks
     await page.close();
