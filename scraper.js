@@ -108,7 +108,8 @@ async function getAvailableDates(refugeUrl) {
     for (let index = 0; index <= [...Array(monthsInAdvance).keys()].length; index++) {
         // Get available dates of current month
         try {
-            await page.waitForSelector(daySelector, { timeout: 1000 })
+            console.log("Trying again in round " + index)
+            await page.waitForSelector(daySelector, { timeout: 3000 })
         } catch (error) {
             console.log("No dates found on round " + index)
             if(index < monthsInAdvance) continue
