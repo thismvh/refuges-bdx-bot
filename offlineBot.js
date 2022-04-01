@@ -400,7 +400,7 @@ async function notifyOfAvailabilities() {
     }
 
     var userWasNotified = update.notify === false || update.reservationUrls !== undefined
-    console.log(`userWasNotified is ${userWasNotified}, hasNewAvailabilities is ${hasNewAvailabilities} and update is ${JSON.stringify(update)}`)
+    // console.log(`userWasNotified is ${userWasNotified}, hasNewAvailabilities is ${hasNewAvailabilities} and update is ${JSON.stringify(update)}`)
     if(hasNewAvailabilities || userWasNotified)
       await updateRefuge(update, refuge.name)
   }
