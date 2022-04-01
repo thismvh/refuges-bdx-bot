@@ -88,7 +88,7 @@ async function findRefuges() {
 };
 
 async function getAvailableDates(refugeUrl) {
-    console.log("Starting getAvailableDates process for " + refugeUrl);
+    console.log("Starting getAvailableDates process for " + refugeUrl.substring(BDX_REFUGES_URL.length + 1));
     // Connect to browser instance
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
 
@@ -115,7 +115,7 @@ async function getAvailableDates(refugeUrl) {
                 await page.waitForSelector(nextMonthSelector)
                 var nextMonthButton = await page.$(nextMonthSelector)
                 await page.evaluate(e => e.click(), nextMonthButton);
-                
+
                 continue;
             }
             return availableDates
@@ -131,7 +131,7 @@ async function getAvailableDates(refugeUrl) {
 
         // Add available dates from this month to the total
         availableDates = availableDates.concat(newDates)
-        console.log(refugeUrl + ": availableDates has length " + availableDates.length + " and currentMonth is: " + currentMonth)
+        console.log("availableDates has length " + availableDates.length + " and currentMonth is: " + currentMonth)
 
         // Go to next month
         await page.waitForSelector(nextMonthSelector)
