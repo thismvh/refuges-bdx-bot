@@ -88,7 +88,7 @@ async function findRefuges() {
 };
 
 async function getAvailableDates(refugeUrl) {
-    console.log("Starting getAvailableDates process");
+    console.log("Starting getAvailableDates process for " + refugeUrl);
     // Connect to browser instance
     const browser = await puppeteer.connect({ browserWSEndpoint: browserEndpoint });
 
