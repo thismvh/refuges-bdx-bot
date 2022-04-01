@@ -112,6 +112,7 @@ async function getAvailableDates(refugeUrl) {
         } catch (error) {
             console.log("No dates found on round " + index)
             if(index < monthsInAdvance) continue
+            console.log("Not continuing, returning " + availableDates.length + " dates now!")
             return availableDates
         }
 
