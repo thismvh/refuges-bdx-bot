@@ -3,8 +3,8 @@ const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
 const { schedule } = require("@netlify/functions");
 
-const { findRefuges, initialiseBrowser, closeBrowser, getAvailableDates, makeReservation, capitalise } = require("./scraper");
-const { delay, arrayIsEqual } = require("./helpers")
+const { findRefuges, initialiseBrowser, closeBrowser, getAvailableDates, makeReservation, capitalise } = require("../../scraper");
+const { delay, arrayIsEqual } = require("../../helpers")
 const { 
   ACTION_FETCH_AVAILABLE_DATES,
   ACTION_MORE_REFUGES,
@@ -30,9 +30,9 @@ const {
   PORT,
   API_PATH_BASE,
   ROLLING_EYES
-} = require("./constants");
+} = require("../../constants");
 
-const { updateRefuge } = require("./requests");
+const { updateRefuge } = require("../../requests");
 
 const token = process.env.BOT_TOKEN_ROBOCHOU
 if (token === undefined) {
