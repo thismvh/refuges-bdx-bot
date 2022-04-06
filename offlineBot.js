@@ -1,7 +1,7 @@
 const http = require("http");
-const cron = require("node-cron");
 const { Composer, session, Telegraf, Scenes } = require("telegraf");
 const WizardScene = Scenes.WizardScene;
+const { schedule } = require("@netlify/functions");
 
 const { findRefuges, initialiseBrowser, closeBrowser, getAvailableDates, makeReservation, capitalise } = require("./scraper");
 const { delay, arrayIsEqual } = require("./helpers")
@@ -38,8 +38,6 @@ const token = process.env.BOT_TOKEN_ROBOCHOU
 if (token === undefined) {
   throw new Error("BOT_TOKEN_ROBOCHOU must be provided!")
 }
-
-var chatId = null;
 
 const stepHandler = new Composer()
 stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (ctx) => {
@@ -312,9 +310,6 @@ bot.launch()
 
 // This will be executed when the user inputs the command /start
 bot.start((ctx) => {
-  // Save chatId for later
-  chatId = ctx.chat.id;
-
   // Greet user
   ctx.reply(WELCOME_MESSAGE)
     .then(() => ctx.scene.enter(LIST_REFUGES_SCENE));
@@ -324,17 +319,7 @@ bot.start((ctx) => {
 process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))
 
-// Create express server just so that Heroku recognizes this script as a web process
-const express = require("express");
-const app = express();
-
-app.get("/", (req, res) => {
-  res.send("Hello World, this is offlineBot!")
-})
-app.listen(PORT, () => {
-  console.log(`Listening on port ${PORT}`)
-})
-
+// Cron Job
 async function notifyOfAvailabilities() {
   var options = {
     hostname: process.env.SERVER_URL,
@@ -409,8 +394,13 @@ async function notifyOfAvailabilities() {
   await closeBrowser();
 }
 
-// TODO: Maybe we could send a GET request from the Netlify server as a sort of "webhook" to avoid constantly polling??
-cron.schedule("* 7-23 * 3-11 *", () => {
+// // TODO: Maybe we could send a GET request from the Netlify server as a sort of "webhook" to avoid constantly polling??
+// cron.schedule("* 7-23 * 3-11 *", () => {
+//   console.log("Notifying of potential new availabilities now...");
+//   notifyOfAvailabilities();
+// })
+
+module.exports.handler = schedule("* 7-23 * 3-11 *", () => {
   console.log("Notifying of potential new availabilities now...");
   notifyOfAvailabilities();
 })
