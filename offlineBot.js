@@ -413,4 +413,4 @@ async function notifyOfAvailabilities() {
 cron.schedule("* 7-23 * 3-11 *", () => {
   console.log("Notifying of potential new availabilities now...");
   notifyOfAvailabilities();
-})
+}, { timezone: "Europe/Paris" })
