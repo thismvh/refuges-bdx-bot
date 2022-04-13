@@ -360,6 +360,8 @@ async function notifyOfAvailabilities() {
     var availableDates = await getAvailableDates(refuge.url);
     var reservedDate;
     update.availableDates = availableDates;
+    // Take current notify as base value. If anything changed, it will be overwritten down below
+    update.notify = refuge.notify;
 
     // Only re-notify the user about the same refuge when availableDates was 0 before
     if(availableDates.length === 0) update.notify = true
@@ -388,7 +390,7 @@ async function notifyOfAvailabilities() {
 
     var refugeName = refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(availableDates.length > 0 && update.notify) {
-      await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} Il y a des places libres pour ${refugeName}!!! Réserve directement sur: ${refuge.url}`)
+      await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} ${refugeName} a des places libres les jours ${availableDates.join(", ")}!!! Réserve directement sur: ${refuge.url}`)
       update.notify = false;
     }
     
