@@ -403,9 +403,8 @@ async function notifyOfAvailabilities() {
     // Notify of new availabilities in case there are any
     if(!update.notify && !hasNewAvailabilities) continue
 
-    var refugeName = refuge.name.toLowerCase().split(/[-\s]/).map(x => capitalise(x)).join(" ");
     if(availableDates.length > 0 && update.notify) {
-      await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} ${refugeName} a des places libres les jours ${availableDates.join(", ")}!!! Réserve directement sur: ${refuge.url}`)
+      await bot.telegram.sendMessage(refuge.chatId, `Woooohoooo!! ${PARTYING_FACE} ${PARTYING_FACE} ${refuge.prettyName} a des places libres les jours ${availableDates.join(", ")}!!! Réserve directement sur: ${refuge.url}`)
       update.notify = false;
     }
     
