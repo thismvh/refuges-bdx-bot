@@ -39,8 +39,6 @@ if (token === undefined) {
   throw new Error("BOT_TOKEN_ROBOCHOU must be provided!")
 }
 
-var chatId = null;
-
 const stepHandler = new Composer()
 stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (ctx) => {
   // Answer callback to remove loading icon on button after clicking
@@ -312,12 +310,29 @@ bot.launch()
 
 // This will be executed when the user inputs the command /start
 bot.start((ctx) => {
-  // Save chatId for later
-  chatId = ctx.chat.id;
-
   // Greet user
   ctx.reply(WELCOME_MESSAGE)
     .then(() => ctx.scene.enter(LIST_REFUGES_SCENE));
+});
+
+// Additional commands
+bot.command("list", async (ctx) => {
+  var options = {
+    hostname: process.env.SERVER_URL,
+    path: `${API_PATH_BASE}/all-refuges`,
+  };
+  var allRefuges = await new Promise((resolve, reject) => {
+      http.get(options, (res) => {
+          var body = ""
+          res.on("data", (chunk) => body += chunk );
+          res.on("end", () => resolve(JSON.parse(body)));
+      });
+  })
+
+  if(allRefuges.length == 0) return
+
+  var availabilitiesSummary = allRefuges.reduce((accumulator, refuge) => accumulator + `${refuge.name}:\n ${refuge.availableDates.join(", ")} \n\n`, "");
+  ctx.reply(`Pour tous les refuges, les dates disponibles sont: \n\n ${availabilitiesSummary}`)
 });
 
 // Enable graceful stop

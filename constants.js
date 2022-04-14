@@ -20,13 +20,15 @@ const NEW_MOON_FACE = "\u{1F31A}"
 const EXPLODING_HEAD = "\u{1F92F}"
 const CONFUSED_FACE = "\u{1F615}"
 const WARNING = "\u{26A0}"
+const HAND_POINTING_LEFT = "\u{1F448}"
+const HAND_POINTING_RIGHT = "\u{1F449}"
 
 // Pre-defined bot messages
 const WELCOME_MESSAGE = `Coucou, j'ai entendu tu veux réserver un refuge? ${GRIN}`;
 const CHIANT_CHECK_REFUGES = `Mais pfff, c'est chiant d'aller à la site web tout le temps pour voir s'il y a des places, non? ${ROLLING_EYES}`
 const TINQUIETE_JY_VAIS = `T'inquièèèèète, j'y vais à ta place et quand je vois des places disponibles je t'envoie un message et puis tu peux être la première à réserver ${WINK}`
 const WHICH_REFUGE_MESSAGE = `Quel refuge est-ce que tu veux réserver?`;
-const GOING_TO_SLEEP = `Ok, je vais faire dodo alors ${SLEEPING_FACE} Réveille-moi en écrivant /start dans ce chat ou en appuyant sur les /start bleus. Tschuuuus! ${WAVING_HAND}`
+const GOING_TO_SLEEP = `Ok, je vais faire dodo alors ${SLEEPING_FACE} Réveille-moi en écrivant /start dans ce chat ou en appuyant sur ce ${HAND_POINTING_RIGHT} /start ${HAND_POINTING_LEFT}. \n\nAh, et si tu veux une liste des disponibilités pour tous les refuges, appuye sur ${HAND_POINTING_RIGHT} /list ${HAND_POINTING_LEFT}. \n\nTschuuuus! ${WAVING_HAND}`
 
 // Bot actions
 const ACTION_FETCH_AVAILABLE_DATES = "FETCH_DATES";
