@@ -331,8 +331,8 @@ bot.command("list", async (ctx) => {
 
   if(allRefuges.length == 0) return
 
-  var availabilitiesSummary = allRefuges.reduce((accumulator, refuge) => accumulator + `${refuge.name}:\n ${refuge.availableDates.join(", ")} \n\n`, "");
-  ctx.reply(`Pour tous les refuges, les dates disponibles sont: \n\n ${availabilitiesSummary}`)
+  var availabilitiesSummary = allRefuges.reduce((accumulator, refuge) => accumulator + `${refuge.prettyName}:\n ${refuge.availableDates.join(", ")} \n\n`, "");
+  ctx.reply(`Pour tous les refuges, les dates disponibles sont: \n\n${availabilitiesSummary}`)
 });
 
 // Enable graceful stop
