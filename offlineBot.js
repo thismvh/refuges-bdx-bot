@@ -331,8 +331,12 @@ bot.command("list", async (ctx) => {
 
   if(allRefuges.length == 0) return
 
-  var availabilitiesSummary = allRefuges.reduce((accumulator, refuge) => accumulator + `${refuge.prettyName}:\n ${refuge.availableDates.join(", ")} \n\n`, "");
-  ctx.reply(`Pour tous les refuges, les dates disponibles sont: \n\n${availabilitiesSummary}`)
+  var availabilitiesSummary = allRefuges.reduce((accumulator, refuge) => accumulator + `${refuge.prettyName}:\n${refuge.availableDates.join(", ")} \n\n`, "");
+  await ctx.reply("Pour tous les refuges, les dates disponibles sont: \n\n")
+  await delay(1000);
+  await ctx.reply(availabilitiesSummary)
+  await delay (2000);
+  await ctx.reply(GOING_TO_SLEEP)
 });
 
 // Enable graceful stop
