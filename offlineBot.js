@@ -52,7 +52,7 @@ stepHandler.action(new RegExp(ACTION_FETCH_AVAILABLE_DATES + "_+", "g"), async (
   var fullUrl = `${BDX_REFUGES_URL}/${relativeUrl}`;
   // Add this refuge to database if in case it didn't yet exist
   // TODO: probably this should return the updated refuge to avoid fetching the refuge again 
-  await updateRefuge({ name: relativeUrl, url: fullUrl, chatId: ctx.chat.id, notify: true }, relativeUrl)
+  await updateRefuge({ name: relativeUrl, prettyName: refugeName, url: fullUrl, chatId: ctx.chat.id, notify: true }, relativeUrl)
 
   // Little feedback to user to keep attention
   await ctx.reply(`Ok, attend, je vais voir s'il y a des places libres pour ${refugeName} ...`);
